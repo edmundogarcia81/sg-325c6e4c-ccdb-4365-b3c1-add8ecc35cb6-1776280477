@@ -473,7 +473,7 @@ export default function AdminPage() {
             <div className="flex items-center gap-4">
               <div className="bg-white rounded-lg shadow-sm p-2">
                 <Image 
-                  src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                  src="/b11.jpg"
                   alt="B11 Logo"
                   width={100}
                   height={38}
@@ -809,9 +809,11 @@ export default function AdminPage() {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 mb-2">
                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                <h4 className="font-semibold text-sm truncate">{category.title}</h4>
+                                <Badge variant="secondary" className="text-xs">
+                                  {category.title}
+                                </Badge>
                               </div>
                               <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                                 {category.description}

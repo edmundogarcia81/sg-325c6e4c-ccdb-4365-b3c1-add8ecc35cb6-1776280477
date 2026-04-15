@@ -105,7 +105,7 @@ export default function SurveyPage() {
               <div className="flex items-center gap-4">
                 <div className="bg-white rounded-lg shadow-sm p-2">
                   <Image 
-                    src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                    src="/b11.jpg"
                     alt="B11 Logo"
                     width={100}
                     height={38}

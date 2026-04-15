@@ -34,7 +34,7 @@ export default function ThankYou() {
           <div className="text-center mb-8">
             <div className="inline-block bg-white rounded-2xl shadow-md p-6 mb-6">
               <Image 
-                src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                src="/b11.jpg"
                 alt="B11 Logo"
                 width={160}
                 height={60}
