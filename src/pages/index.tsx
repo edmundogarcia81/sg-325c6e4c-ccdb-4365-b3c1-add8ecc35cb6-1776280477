@@ -1,240 +1,203 @@
 import { useState, useEffect } from "react";
-import { useRouter } from "next/router";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { QuestionCard } from "@/components/QuestionCard";
 import { useSurvey } from "@/contexts/SurveyContext";
-import { useToast } from "@/hooks/use-toast";
-import { categories, questions } from "@/lib/surveyData";
+import { QuestionCard } from "@/components/QuestionCard";
+import { useRouter } from "next/router";
 import Image from "next/image";
+import { SurveyProgress } from "@/components/SurveyProgress";
 
-export default function Home() {
+export default function SurveyPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const { state, setAnswer, setCurrentCategory, markCategoryComplete, getProgress, saveToDatabaseAndSendEmail } = useSurvey();
-  const [showValidation, setShowValidation] = useState(false);
+  const { 
+    surveyId, 
+    uniqueToken, 
+    categories, 
+    responses, 
+    loadingSurveyConfig,
+    currentCategoryIndex,
+    setCurrentCategoryIndex,
+    saveSurveyResponse,
+    completeSurvey
+  } = useSurvey();
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  // Calculate progress
+  const getProgress = () => {
+    if (!categories.length) return 0;
+    
+    const totalQuestions = categories.reduce((acc, cat) => acc + cat.questions.length, 0);
+    const answeredQuestions = Object.keys(responses).length;
+    
+    return totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
+  };
+
+  const progress = getProgress();
 
   useEffect(() => {
-    const surveyId = localStorage.getItem("currentSurveyId");
-    const email = localStorage.getItem("surveyEmail");
-    
-    if (!surveyId || !email) {
-      router.push("/start");
+    if (!surveyId && !loadingSurveyConfig) {
+      router.push('/start');
     }
-  }, [router]);
+  }, [surveyId, router, loadingSurveyConfig]);
 
-  const currentCategoryQuestions = questions.filter(
-    q => q.category === state.currentCategory
-  );
+  if (loadingSurveyConfig || !categories.length) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
-  const currentCategory = categories.find(c => c.id === state.currentCategory);
-  const currentCategoryIndex = categories.findIndex(c => c.id === state.currentCategory);
+  const currentCategory = categories[currentCategoryIndex];
+  const isFirstCategory = currentCategoryIndex === 0;
   const isLastCategory = currentCategoryIndex === categories.length - 1;
 
-  const getCurrentCategoryAnswers = () => {
-    return currentCategoryQuestions.filter(q => {
-      const answer = state.answers[q.id];
-      return answer && (answer.value !== null || answer.isNotMyRole);
-    }).length;
-  };
+  // Check if all questions in current category are answered
+  const isCategoryComplete = currentCategory.questions.every(
+    q => responses[q.id] && (responses[q.id].answer_value || responses[q.id].is_not_my_role)
+  );
 
-  const areRequiredQuestionsAnswered = () => {
-    return currentCategoryQuestions
-      .filter(q => q.required)
-      .every(q => {
-        const answer = state.answers[q.id];
-        return answer && (answer.value !== null || answer.isNotMyRole);
-      });
-  };
-
-  const handleNext = async () => {
-    if (!areRequiredQuestionsAnswered()) {
-      setShowValidation(true);
-      toast({
-        variant: "destructive",
-        title: "Campos requeridos",
-        description: "Por favor complete todas las preguntas obligatorias antes de continuar."
-      });
-      return;
-    }
-
-    markCategoryComplete(state.currentCategory);
-
-    if (!isLastCategory) {
-      const nextCategory = categories[currentCategoryIndex + 1];
-      setCurrentCategory(nextCategory.id);
-      setShowValidation(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      setIsSubmitting(true);
-      try {
-        await saveToDatabaseAndSendEmail();
-        
-        toast({
-          title: "¡Encuesta completada!",
-          description: "Hemos enviado un resumen a su correo electrónico con una liga para ver las estadísticas."
-        });
-
-        setTimeout(() => {
-          router.push("/thank-you");
-        }, 2000);
-      } catch (error) {
-        console.error("Error submitting survey:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Hubo un problema al enviar la encuesta. Por favor intente nuevamente."
-        });
-      } finally {
-        setIsSubmitting(false);
-      }
+  const handleNext = () => {
+    if (isCategoryComplete && !isLastCategory) {
+      setCurrentCategoryIndex(currentCategoryIndex + 1);
+      window.scrollTo(0, 0);
     }
   };
 
   const handlePrevious = () => {
-    if (currentCategoryIndex > 0) {
-      const prevCategory = categories[currentCategoryIndex - 1];
-      setCurrentCategory(prevCategory.id);
-      setShowValidation(false);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!isFirstCategory) {
+      setCurrentCategoryIndex(currentCategoryIndex - 1);
+      window.scrollTo(0, 0);
     }
   };
 
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    setError(null);
+    try {
+      await completeSurvey();
+      router.push('/thank-you');
+    } catch (err) {
+      setError("Hubo un error al enviar la encuesta. Por favor, intenta de nuevo.");
+      console.error(err);
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!surveyId) return null;
+
   return (
     <>
-      <SEO
-        title="Diagnóstico de Madurez ERP - UNICCO"
-        description="Evaluación de control financiero para SAP Business One"
+      <SEO 
+        title="Encuesta de Diagnóstico - UNICCO"
+        description="Evaluación de madurez operativa y financiera"
       />
       <div className="min-h-screen bg-background">
-        <div className="container max-w-4xl py-8">
-          {/* Header con progreso simple */}
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-                  Diagnóstico de Madurez ERP
-                </h1>
-                <p className="text-muted-foreground">
-                  Evaluación de control financiero para UNICCO
-                </p>
+        {/* Header with Logo */}
+        <div className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
+          <div className="container py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="bg-white rounded-lg shadow-sm p-2">
+                  <Image 
+                    src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                    alt="B11 Logo"
+                    width={100}
+                    height={38}
+                    priority
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-lg font-heading font-bold text-foreground">Encuesta de Diagnóstico</h1>
+                  <p className="text-sm text-muted-foreground">UNICCO - Evaluación ERP</p>
+                </div>
               </div>
               <div className="text-right">
-                <p className="text-sm text-muted-foreground mb-1">Progreso global</p>
-                <p className="text-3xl font-heading font-bold text-primary">
-                  {getProgress()}%
-                </p>
+                <div className="text-sm font-medium mb-1">Progreso General</div>
+                <div className="flex items-center gap-3">
+                  <Progress value={progress} className="w-32 h-2" />
+                  <span className="text-sm font-bold text-primary">{progress}%</span>
+                </div>
               </div>
-            </div>
-
-            {/* Indicador simple de sección actual */}
-            <div className="bg-muted/50 rounded-lg p-4 border border-border">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-foreground">
-                  Sección {currentCategoryIndex + 1} de {categories.length}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {state.completedCategories.length} completadas
-                </span>
-              </div>
-              <Progress value={getProgress()} className="h-2" />
             </div>
           </div>
+        </div>
 
-          {/* Contenido principal - una sola columna */}
-          <main>
-            <div className="bg-card rounded-lg border border-border p-6 md:p-8 shadow-sm">
-              <div className="flex items-start gap-4 mb-6 pb-6 border-b border-border">
-                <div className="text-4xl">{currentCategory?.icon}</div>
-                <div className="flex-1">
-                  <h2 className="text-2xl font-heading font-semibold text-foreground mb-2">
-                    {currentCategory?.title}
-                  </h2>
-                  <p className="text-muted-foreground">
-                    {currentCategory?.description}
-                  </p>
-                </div>
+        <div className="container py-8 flex flex-col lg:flex-row gap-8">
+          {/* Sidebar / Progress */}
+          <aside className="lg:w-1/4 flex-shrink-0">
+            <div className="sticky top-28">
+              <SurveyProgress />
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <main className="flex-1 max-w-3xl">
+            {error && (
+              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 text-destructive">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                <p className="text-sm">{error}</p>
               </div>
+            )}
 
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-muted-foreground">
-                    Preguntas respondidas: {getCurrentCategoryAnswers()} / {currentCategoryQuestions.length}
-                  </span>
-                  <span className="text-sm font-semibold text-foreground">
-                    {Math.round((getCurrentCategoryAnswers() / currentCategoryQuestions.length) * 100)}%
-                  </span>
-                </div>
-                <Progress 
-                  value={(getCurrentCategoryAnswers() / currentCategoryQuestions.length) * 100} 
-                  className="h-2"
+            <div className="mb-8">
+              <h2 className="text-3xl font-heading font-bold mb-3 flex items-center gap-3 text-foreground">
+                {currentCategory.title}
+              </h2>
+              <p className="text-muted-foreground text-lg">{currentCategory.description}</p>
+            </div>
+
+            <div className="space-y-6">
+              {currentCategory.questions.map((question) => (
+                <QuestionCard
+                  key={question.id}
+                  question={question}
+                  response={responses[question.id]}
+                  onResponseChange={saveSurveyResponse}
                 />
-              </div>
+              ))}
+            </div>
 
-              {showValidation && !areRequiredQuestionsAnswered() && (
-                <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm font-semibold text-destructive mb-1">
-                      Campos requeridos incompletos
-                    </p>
-                    <p className="text-sm text-destructive/80">
-                      Por favor complete todas las preguntas marcadas como obligatorias antes de continuar.
-                    </p>
-                  </div>
-                </div>
+            {/* Navigation Navigation */}
+            <div className="mt-12 flex items-center justify-between pt-6 border-t border-border">
+              <Button
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={isFirstCategory}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" /> Anterior
+              </Button>
+
+              {!isCategoryComplete && (
+                <p className="text-sm text-muted-foreground hidden sm:block">
+                  Por favor, responde todas las preguntas para continuar
+                </p>
               )}
 
-              <div className="space-y-4 mb-8">
-                {currentCategoryQuestions.map((question, index) => (
-                  <QuestionCard
-                    key={question.id}
-                    question={question}
-                    answer={state.answers[question.id]}
-                    onAnswer={(answer) => setAnswer(question.id, answer)}
-                    questionNumber={index + 1}
-                  />
-                ))}
-              </div>
-
-              <div className="flex items-center justify-between pt-6 border-t border-border">
+              {isLastCategory ? (
                 <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentCategoryIndex === 0 || isSubmitting}
+                  onClick={handleSubmit}
+                  disabled={!isCategoryComplete || isSubmitting}
+                  className="gap-2"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Anterior
+                  {isSubmitting ? "Enviando..." : "Finalizar Encuesta"}
+                  {!isSubmitting && <CheckCircle2 className="w-4 h-4" />}
                 </Button>
-
-                {isLastCategory ? (
-                  <Button
-                    onClick={handleNext}
-                    className="bg-accent hover:bg-accent/90"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Finalizar Encuesta
-                      </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext} disabled={isSubmitting}>
-                    Siguiente
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
-              </div>
+              ) : (
+                <Button
+                  onClick={handleNext}
+                  disabled={!isCategoryComplete}
+                  className="gap-2"
+                >
+                  Siguiente <ArrowRight className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </main>
         </div>

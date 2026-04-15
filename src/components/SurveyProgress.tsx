@@ -1,86 +1,51 @@
-import { Check } from "lucide-react";
-import { categories } from "@/lib/surveyData";
-import type { CategoryId } from "@/types/survey";
-import { cn } from "@/lib/utils";
+import { useSurvey } from "@/contexts/SurveyContext";
+import { CheckCircle2, Circle } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
-interface SurveyProgressProps {
-  currentCategory: CategoryId;
-  completedCategories: CategoryId[];
-  progress: number;
-  onSelectCategory?: (categoryId: CategoryId) => void;
-}
+export function SurveyProgress() {
+  const { categories, currentCategoryIndex, responses, setCurrentCategoryIndex } = useSurvey();
 
-export function SurveyProgress({ 
-  currentCategory, 
-  completedCategories, 
-  progress,
-  onSelectCategory
-}: SurveyProgressProps) {
+  if (!categories || categories.length === 0) return null;
+
   return (
-    <div className="bg-card rounded-lg border border-border p-6 shadow-sm h-fit sticky top-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading font-semibold text-foreground">
-          Progreso de la Encuesta
-        </h3>
-        <span className="text-sm text-muted-foreground">
-          {completedCategories.length} / {categories.length} secciones
-        </span>
-      </div>
+    <Card className="p-4 border-2 sticky top-24">
+      <h3 className="font-heading font-semibold mb-4 text-foreground">Secciones</h3>
+      <div className="space-y-1">
+        {categories.map((category, index) => {
+          const isActive = index === currentCategoryIndex;
+          const questions = category.questions || [];
+          
+          // Determine if category is completed based on answered questions vs total
+          const isCompleted = questions.length > 0 && questions.every(
+            q => responses[q.id] && (responses[q.id].answer_value || responses[q.id].is_not_my_role)
+          );
 
-      <div className="space-y-1 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-        <div className="relative z-10 flex flex-col gap-4">
-          {categories.map((category, index) => {
-            const isCompleted = completedCategories.includes(category.id);
-            const isCurrent = currentCategory === category.id;
-            
-            return (
-              <button
-                key={category.id}
-                onClick={() => onSelectCategory?.(category.id)}
-                disabled={!isCompleted && !isCurrent}
-                className={`flex items-start gap-4 p-3 rounded-lg transition-colors text-left ${
-                  isCurrent 
-                    ? "bg-primary/5 border border-primary/20" 
-                    : isCompleted && onSelectCategory
-                      ? "hover:bg-muted cursor-pointer"
-                      : "cursor-default"
-                }`}
-              >
-                <div
-                  className={cn(
-                    "relative z-10 flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all shrink-0",
-                    isCompleted
-                      ? "bg-accent border-accent text-accent-foreground"
-                      : isCurrent
-                      ? "bg-primary border-primary text-primary-foreground"
-                      : "bg-card border-border text-muted-foreground"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <span className="text-sm font-semibold">{index + 1}</span>
-                  )}
-                </div>
-                
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <h3
-                    className={cn(
-                      "font-medium text-sm mb-0.5 transition-colors",
-                      isCurrent ? "text-primary" : "text-foreground"
-                    )}
-                  >
-                    {category.title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {category.description}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+          return (
+            <button
+              key={category.id}
+              onClick={() => setCurrentCategoryIndex(index)}
+              disabled={!isCompleted && index > currentCategoryIndex && index !== currentCategoryIndex + 1}
+              className={`
+                w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all
+                ${isActive ? 'bg-primary text-primary-foreground font-medium shadow-md' : 'hover:bg-muted text-muted-foreground'}
+                ${!isCompleted && index > currentCategoryIndex + 1 ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              `}
+            >
+              {isCompleted ? (
+                <CheckCircle2 className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary-foreground' : 'text-primary'}`} />
+              ) : isActive ? (
+                <Circle className="w-5 h-5 flex-shrink-0 fill-current opacity-20" />
+              ) : (
+                <Circle className="w-5 h-5 flex-shrink-0" />
+              )}
+              
+              <span className="text-sm line-clamp-1 flex-1">
+                {category.title}
+              </span>
+            </button>
+          );
+        })}
       </div>
-    </div>
+    </Card>
   );
 }

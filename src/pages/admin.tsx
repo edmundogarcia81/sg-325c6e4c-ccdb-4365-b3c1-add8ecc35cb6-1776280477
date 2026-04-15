@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { 
@@ -122,14 +122,16 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [surveysData, statsData, categoriesData] = await Promise.all([
+      const [surveysData, statsData, categoriesData, catsWithQ] = await Promise.all([
         surveyService.getAllSurveys(),
         surveyService.getSurveyStats(),
-        surveyConfigService.getAllCategories()
+        surveyConfigService.getAllCategories(),
+        surveyConfigService.getCategoriesWithQuestions()
       ]);
       setSurveys(surveysData);
       setStats(statsData);
       setCategories(categoriesData);
+      setCategoriesWithQuestions(catsWithQ);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -137,77 +139,60 @@ export default function AdminPage() {
     }
   };
 
-  const calculateCategoryStats = (surveysData: Survey[]) => {
-    const statsMap: { [key: string]: CategoryStats } = {};
+  // Calculate aggregated stats per category
+  const categoryStats = useMemo(() => {
+    if (!categoriesWithQuestions.length || !surveys.length) return [];
 
-    categories.forEach(category => {
-      const categoryQuestions = questions.filter(q => q.category === category.id);
-      const responseDistribution: { [key: string]: number } = {};
-      let totalResponses = 0;
-      let notMyRoleCount = 0;
-      let scoreSum = 0;
-      let scoreCount = 0;
+    return categoriesWithQuestions.map(category => {
+      // Find all questions for this category
+      const categoryQuestions = category.questions;
+      const questionIds = categoryQuestions.map(q => q.id);
 
-      categoryQuestions.forEach(question => {
-        surveysData.forEach(survey => {
-          const response = survey.survey_responses.find(r => r.question_id === question.id);
-          if (response) {
-            totalResponses++;
-            if (response.is_not_my_role) {
-              notMyRoleCount++;
-            } else if (response.answer_value) {
-              const value = response.answer_value;
-              responseDistribution[value] = (responseDistribution[value] || 0) + 1;
-              
-              // Calculate score for numeric responses (1-5 scale)
-              const numValue = parseInt(value);
-              if (!isNaN(numValue) && numValue >= 1 && numValue <= 5) {
-                scoreSum += numValue;
-                scoreCount++;
-              }
-            }
-          }
-        });
-      });
+      // Collect all responses for these questions across all completed surveys
+      const allResponses = surveys
+        .filter(s => s.completed_at)
+        .flatMap(s => s.survey_responses)
+        .filter(r => questionIds.includes(r.question_id));
 
-      // Find most common answer
-      let mostCommonAnswer = "Sin datos";
-      let mostCommonCount = 0;
-      Object.entries(responseDistribution).forEach(([answer, count]) => {
-        if (count > mostCommonCount) {
-          mostCommonCount = count;
+      const totalResponses = allResponses.length;
+      const validResponses = allResponses.filter(r => !r.is_not_my_role && r.answer_value);
+      const notMyRoleResponses = allResponses.filter(r => r.is_not_my_role);
+
+      // Calculate the most common answer
+      const answerCounts = validResponses.reduce((acc, curr) => {
+        if (curr.answer_value) {
+          acc[curr.answer_value] = (acc[curr.answer_value] || 0) + 1;
+        }
+        return acc;
+      }, {} as Record<string, number>);
+
+      let mostCommonAnswer = "Sin datos suficientes";
+      let highestCount = 0;
+
+      Object.entries(answerCounts).forEach(([answer, count]) => {
+        if (count > highestCount) {
+          highestCount = count;
           mostCommonAnswer = answer;
         }
       });
 
-      // Map numeric answers to text
-      const answerTextMap: { [key: string]: string } = {
-        "1": "Nunca",
-        "2": "Rara vez",
-        "3": "A veces",
-        "4": "Frecuentemente",
-        "5": "Siempre"
-      };
-      
-      if (answerTextMap[mostCommonAnswer]) {
-        mostCommonAnswer = answerTextMap[mostCommonAnswer];
+      // Si es una pregunta de opciones largas, tratamos de acortar la respuesta más común
+      if (mostCommonAnswer.length > 50) {
+        mostCommonAnswer = mostCommonAnswer.substring(0, 47) + "...";
       }
 
-      statsMap[category.id] = {
-        categoryId: category.id,
-        categoryTitle: category.title,
-        totalQuestions: categoryQuestions.length,
+      return {
+        id: category.id,
+        title: category.title,
+        description: category.description,
         totalResponses,
-        notMyRoleCount,
-        mostCommonAnswer,
-        mostCommonCount,
-        averageScore: scoreCount > 0 ? scoreSum / scoreCount : 0,
-        responseDistribution
+        validResponses: validResponses.length,
+        notMyRoleResponses: notMyRoleResponses.length,
+        completionRate: totalResponses ? Math.round((validResponses.length / totalResponses) * 100) : 0,
+        mostCommonAnswer
       };
     });
-
-    setCategoryStats(Object.values(statsMap));
-  };
+  }, [surveys, categoriesWithQuestions]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -326,7 +311,7 @@ export default function AdminPage() {
         : [""];
       setQuestionForm({ 
         text: question.text, 
-        type: question.type,
+        type: question.type as "likert" | "yesno" | "open",
         options: Array.isArray(opts) ? opts : [""]
       });
     } else {
@@ -732,104 +717,72 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-6">
-              <div className="grid gap-6">
-                {categoryStats.map((stat, index) => {
-                  const category = categories.find(c => c.id === stat.categoryId);
-                  const maxValue = Math.max(...Object.values(stat.responseDistribution));
-                  
-                  return (
-                    <Card key={stat.categoryId}>
-                      <CardHeader>
-                        <div className="flex items-start gap-4">
-                          <div className="text-4xl">{category?.icon}</div>
-                          <div className="flex-1">
-                            <CardTitle className="text-xl mb-1">
-                              {index + 1}. {stat.categoryTitle}
-                            </CardTitle>
-                            <CardDescription>
-                              {stat.totalQuestions} preguntas • {stat.totalResponses} respuestas totales
-                            </CardDescription>
-                          </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                {categoryStats.map((stat, index) => (
+                  <Card key={stat.id} className="overflow-hidden border-2 hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+                    <CardHeader className="bg-muted/30 pb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-bold text-primary border border-border">
+                          {index + 1}
                         </div>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="grid gap-4 md:grid-cols-3">
-                          <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
-                            <p className="text-sm text-muted-foreground mb-1">Respuesta más común</p>
-                            <p className="text-2xl font-heading font-bold text-primary">{stat.mostCommonAnswer}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {stat.mostCommonCount} respuestas ({Math.round((stat.mostCommonCount / stat.totalResponses) * 100)}%)
-                            </p>
-                          </div>
-                          
-                          <div className="bg-accent/5 rounded-lg p-4 border border-accent/10">
-                            <p className="text-sm text-muted-foreground mb-1">Promedio general</p>
-                            <p className="text-2xl font-heading font-bold text-accent">
-                              {stat.averageScore > 0 ? stat.averageScore.toFixed(2) : "N/A"}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Escala de 1 a 5
-                            </p>
-                          </div>
-
-                          <div className="bg-muted/50 rounded-lg p-4 border border-border">
-                            <p className="text-sm text-muted-foreground mb-1">No es mi rol</p>
-                            <p className="text-2xl font-heading font-bold text-foreground">{stat.notMyRoleCount}</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                              {Math.round((stat.notMyRoleCount / stat.totalResponses) * 100)}% del total
-                            </p>
-                          </div>
-                        </div>
-
                         <div>
-                          <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                            <PieChart className="w-4 h-4" />
-                            Distribución de respuestas
-                          </h4>
-                          <div className="space-y-3">
-                            {Object.entries(stat.responseDistribution)
-                              .sort(([, a], [, b]) => b - a)
-                              .map(([answer, count]) => {
-                                const percentage = Math.round((count / (stat.totalResponses - stat.notMyRoleCount)) * 100);
-                                const barWidth = (count / maxValue) * 100;
-                                
-                                const answerTextMap: { [key: string]: string } = {
-                                  "1": "Nunca",
-                                  "2": "Rara vez",
-                                  "3": "A veces",
-                                  "4": "Frecuentemente",
-                                  "5": "Siempre"
-                                };
-                                
-                                const displayText = answerTextMap[answer] || answer;
-                                
-                                return (
-                                  <div key={answer} className="space-y-2">
-                                    <div className="flex items-center justify-between text-sm">
-                                      <span className="font-medium text-foreground">{displayText}</span>
-                                      <span className="text-muted-foreground">
-                                        {count} respuestas ({percentage}%)
-                                      </span>
-                                    </div>
-                                    <div className="h-8 bg-muted rounded-lg overflow-hidden">
-                                      <div 
-                                        className="h-full bg-gradient-to-r from-primary to-primary/80 flex items-center justify-end pr-3 transition-all duration-500"
-                                        style={{ width: `${barWidth}%` }}
-                                      >
-                                        <span className="text-xs font-semibold text-white">
-                                          {percentage}%
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                          <CardTitle className="text-lg">{stat.title}</CardTitle>
+                          <CardDescription className="line-clamp-1">{stat.description}</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-5">
+                      <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground font-medium mb-1">Total Respuestas</p>
+                          <p className="text-2xl font-bold">{stat.validResponses}</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground font-medium mb-1">Tasa de Completitud</p>
+                          <p className="text-2xl font-bold text-primary">{stat.completionRate}%</p>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span className="font-medium text-foreground">Respuestas Válidas</span>
+                            <span className="font-bold">{stat.validResponses}</span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="bg-primary h-full rounded-full" 
+                              style={{ width: `${stat.totalResponses ? (stat.validResponses / stat.totalResponses) * 100 : 0}%` }}
+                            />
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                        
+                        <div>
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span className="text-muted-foreground">"No es mi rol"</span>
+                            <span className="font-medium text-muted-foreground">{stat.notMyRoleResponses}</span>
+                          </div>
+                          <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                            <div 
+                              className="bg-muted-foreground/40 h-full rounded-full" 
+                              style={{ width: `${stat.totalResponses ? (stat.notMyRoleResponses / stat.totalResponses) * 100 : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6 pt-5 border-t border-border">
+                        <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          Respuesta Más Común
+                        </p>
+                        <p className="text-sm font-medium bg-primary/5 text-primary-foreground text-primary p-3 rounded-lg border border-primary/10">
+                          "{stat.mostCommonAnswer}"
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             </TabsContent>
 
