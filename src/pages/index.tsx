@@ -105,11 +105,12 @@ export default function SurveyPage() {
               <div className="flex items-center gap-4">
                 <div className="bg-white rounded-lg shadow-sm p-2">
                   <Image 
-                    src="/b11.jpg"
+                    src="/b11.jpg?v=1"
                     alt="B11 Logo"
-                    width={100}
-                    height={38}
+                    width={120}
+                    height={48}
                     priority
+                    className="object-contain"
                   />
                 </div>
                 <div className="hidden sm:block">

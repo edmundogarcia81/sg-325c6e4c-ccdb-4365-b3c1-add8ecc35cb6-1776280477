@@ -34,12 +34,12 @@ export default function ThankYou() {
           <div className="text-center mb-8">
             <div className="inline-block bg-white rounded-2xl shadow-md p-6 mb-6">
               <Image 
-                src="/b11.jpg"
+                src="/b11.jpg?v=1"
                 alt="B11 Logo"
-                width={160}
-                height={60}
+                width={200}
+                height={80}
                 priority
-                className="mx-auto"
+                className="mx-auto object-contain"
               />
             </div>
           </div>
