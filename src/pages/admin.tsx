@@ -30,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table } from "@/components/ui/table";
 import { surveyService } from "@/services/surveyService";
-import { surveyConfigService, type Category, type Question } from "@/services/surveyConfigService";
+import { surveyConfigService, type Category, type Question, type CategoryWithQuestions } from "@/services/surveyConfigService";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   AlertDialog,
@@ -92,10 +92,10 @@ export default function AdminPage() {
   const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
   // Survey config management states
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoriesWithQuestions, setCategoriesWithQuestions] = useState<CategoryWithQuestions[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [editCategoryDialog, setEditCategoryDialog] = useState(false);
