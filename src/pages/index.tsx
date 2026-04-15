@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle2 } from "lucide-react";
+import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,26 +14,26 @@ export default function Home() {
   const [showValidation, setShowValidation] = useState(false);
 
   const currentCategoryQuestions = questions.filter(
-    q => q.category === state.currentCategory
+    (q) => q.category === state.currentCategory
   );
 
-  const currentCategoryIndex = categories.findIndex(c => c.id === state.currentCategory);
+  const currentCategoryIndex = categories.findIndex((c) => c.id === state.currentCategory);
   const isLastCategory = currentCategoryIndex === categories.length - 1;
 
   const getCurrentCategoryAnswers = () => {
-    return currentCategoryQuestions.filter(q => {
+    return currentCategoryQuestions.filter((q) => {
       const answer = state.answers[q.id];
       return answer && (answer.value !== null || answer.isNotMyRole);
     }).length;
   };
 
   const areRequiredQuestionsAnswered = () => {
-    return currentCategoryQuestions
-      .filter(q => q.required)
-      .every(q => {
-        const answer = state.answers[q.id];
-        return answer && (answer.value !== null || answer.isNotMyRole);
-      });
+    return currentCategoryQuestions.
+    filter((q) => q.required).
+    every((q) => {
+      const answer = state.answers[q.id];
+      return answer && (answer.value !== null || answer.isNotMyRole);
+    });
   };
 
   const handleNext = () => {
@@ -67,17 +67,17 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const currentCategory = categories.find(c => c.id === state.currentCategory);
+  const currentCategory = categories.find((c) => c.id === state.currentCategory);
   const answeredCount = getCurrentCategoryAnswers();
   const totalCount = currentCategoryQuestions.length;
-  const categoryProgress = totalCount > 0 ? (answeredCount / totalCount) * 100 : 0;
+  const categoryProgress = totalCount > 0 ? answeredCount / totalCount * 100 : 0;
 
   return (
     <>
       <SEO
         title="Encuesta de Diagnóstico ERP - Unión de Crédito"
-        description="Evalúe la madurez operativa y financiera de su institución en 7 áreas clave"
-      />
+        description="Evalúe la madurez operativa y financiera de su institución en 7 áreas clave" />
+      
       
       <div className="min-h-screen bg-background">
         <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
@@ -87,8 +87,8 @@ export default function Home() {
                 <h1 className="text-2xl font-heading font-bold text-foreground">
                   Diagnóstico de Madurez ERP
                 </h1>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Evaluación de control financiero para uniones de crédito
+                <p className="text-sm text-muted-foreground mt-1">Evaluación de control financiero para UNICCO
+
                 </p>
               </div>
               <div className="text-right">
@@ -109,8 +109,8 @@ export default function Home() {
               <SurveyProgress
                 currentCategory={state.currentCategory}
                 completedCategories={state.completedCategories}
-                onCategorySelect={handleCategorySelect}
-              />
+                onCategorySelect={handleCategorySelect} />
+              
             </aside>
 
             <main>
@@ -141,8 +141,8 @@ export default function Home() {
                 </div>
               </div>
 
-              {showValidation && !areRequiredQuestionsAnswered() && (
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+              {showValidation && !areRequiredQuestionsAnswered() &&
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                     <div>
@@ -155,49 +155,49 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-              )}
+              }
 
               <div className="space-y-4 mb-8">
-                {currentCategoryQuestions.map((question, index) => (
-                  <QuestionCard
-                    key={question.id}
-                    question={question}
-                    answer={state.answers[question.id]}
-                    onAnswer={setAnswer}
-                    questionNumber={index + 1}
-                  />
-                ))}
+                {currentCategoryQuestions.map((question, index) =>
+                <QuestionCard
+                  key={question.id}
+                  question={question}
+                  answer={state.answers[question.id]}
+                  onAnswer={setAnswer}
+                  questionNumber={index + 1} />
+
+                )}
               </div>
 
               <div className="flex items-center justify-between pt-6 border-t border-border">
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentCategoryIndex === 0}
-                >
+                  disabled={currentCategoryIndex === 0}>
+                  
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
 
-                {isLastCategory ? (
-                  <Button
-                    onClick={handleNext}
-                    className="bg-accent hover:bg-accent/90"
-                  >
+                {isLastCategory ?
+                <Button
+                  onClick={handleNext}
+                  className="bg-accent hover:bg-accent/90">
+                  
                     <CheckCircle2 className="w-4 h-4 mr-2" />
                     Finalizar Encuesta
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext}>
+                  </Button> :
+
+                <Button onClick={handleNext}>
                     Siguiente
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                )}
+                }
               </div>
             </main>
           </div>
         </div>
       </div>
-    </>
-  );
+    </>);
+
 }
