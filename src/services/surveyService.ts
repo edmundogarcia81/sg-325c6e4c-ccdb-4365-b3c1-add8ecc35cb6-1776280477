@@ -39,6 +39,50 @@ export const surveyService = {
     return data;
   },
 
+  async getAllSurveys() {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*, survey_responses(*)")
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getCompletedSurveys() {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*, survey_responses(*)")
+      .not("completed_at", "is", null)
+      .order("completed_at", { ascending: false });
+
+    if (error) throw error;
+    return data;
+  },
+
+  async getSurveyStats() {
+    const { data: allSurveys, error: allError } = await supabase
+      .from("surveys")
+      .select("id, completed_at");
+
+    if (allError) throw allError;
+
+    const { data: completedSurveys, error: completedError } = await supabase
+      .from("surveys")
+      .select("id")
+      .not("completed_at", "is", null);
+
+    if (completedError) throw completedError;
+
+    return {
+      total: allSurveys.length,
+      completed: completedSurveys.length,
+      completionRate: allSurveys.length > 0 
+        ? Math.round((completedSurveys.length / allSurveys.length) * 100)
+        : 0
+    };
+  },
+
   async saveResponse(params: SaveResponseParams) {
     const { data, error } = await supabase
       .from("survey_responses")
