@@ -45,7 +45,7 @@ export default function StartSurvey() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         variant: "destructive",
@@ -59,11 +59,11 @@ export default function StartSurvey() {
 
     try {
       const survey = await surveyService.createSurvey({ name: name.trim(), email: email.trim() });
-      
+
       localStorage.setItem("currentSurveyId", survey.id);
       localStorage.setItem("surveyEmail", email.trim());
       localStorage.setItem("surveyName", name.trim());
-      
+
       toast({
         title: "¡Listo para comenzar!",
         description: "Iniciando encuesta de diagnóstico..."
@@ -88,14 +88,14 @@ export default function StartSurvey() {
     <>
       <SEO
         title="Diagnóstico ERP - UNICCO"
-        description="Evaluación de madurez operativa y financiera"
-      />
+        description="Evaluación de madurez operativa y financiera" />
+      
       
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-heading font-bold text-foreground mb-3">
-              Diagnóstico de Madurez ERP
+            <h1 className="text-4xl font-heading font-bold text-foreground mb-3">Encuesta SAP B1
+
             </h1>
             <p className="text-lg text-muted-foreground">
               Evaluación SAP Business One para UNICCO
@@ -125,12 +125,12 @@ export default function StartSurvey() {
                       }}
                       className={`pl-10 h-12 text-base ${errors.name ? "border-destructive" : ""}`}
                       required
-                      disabled={isLoading}
-                    />
+                      disabled={isLoading} />
+                    
                   </div>
-                  {errors.name && (
-                    <p className="text-sm text-destructive">{errors.name}</p>
-                  )}
+                  {errors.name &&
+                  <p className="text-sm text-destructive">{errors.name}</p>
+                  }
                 </div>
 
                 <div className="space-y-2">
@@ -150,37 +150,37 @@ export default function StartSurvey() {
                       }}
                       className={`pl-10 h-12 text-base ${errors.email ? "border-destructive" : ""}`}
                       required
-                      disabled={isLoading}
-                    />
+                      disabled={isLoading} />
+                    
                   </div>
-                  {errors.email && (
-                    <p className="text-sm text-destructive">{errors.email}</p>
-                  )}
+                  {errors.email &&
+                  <p className="text-sm text-destructive">{errors.email}</p>
+                  }
                 </div>
 
                 <Button
                   type="submit"
                   size="lg"
                   className="w-full h-12 text-base"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
+                  disabled={isLoading}>
+                  
+                  {isLoading ?
+                  <>
                       <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                       Iniciando...
-                    </>
-                  ) : (
-                    <>
+                    </> :
+
+                  <>
                       Iniciar Encuesta
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </>
-                  )}
+                  }
                 </Button>
               </form>
             </CardContent>
           </Card>
         </div>
       </div>
-    </>
-  );
+    </>);
+
 }
