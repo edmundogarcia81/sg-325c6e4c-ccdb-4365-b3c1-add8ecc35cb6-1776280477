@@ -1,13 +1,16 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import type { SurveyState, Answer, CategoryId } from "@/types/survey";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import type { SurveyState, CategoryId, Answer } from "@/types/survey";
+import { categories } from "@/lib/surveyData";
+import { surveyService } from "@/services/surveyService";
 
 interface SurveyContextType {
   state: SurveyState;
-  setAnswer: (answer: Answer) => void;
+  setAnswer: (questionId: string, answer: Answer) => void;
   setCurrentCategory: (category: CategoryId) => void;
   markCategoryComplete: (category: CategoryId) => void;
   resetSurvey: () => void;
   getProgress: () => number;
+  saveToDatabaseAndSendEmail: () => Promise<void>;
 }
 
 const SurveyContext = createContext<SurveyContextType | undefined>(undefined);
@@ -21,14 +24,37 @@ const initialState: SurveyState = {
 export function SurveyProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SurveyState>(initialState);
 
-  const setAnswer = (answer: Answer) => {
+  useEffect(() => {
+    const saved = localStorage.getItem("surveyState");
+    if (saved) {
+      setState(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("surveyState", JSON.stringify(state));
+  }, [state]);
+
+  const setAnswer = async (questionId: string, answer: Answer) => {
     setState(prev => ({
       ...prev,
-      answers: {
-        ...prev.answers,
-        [answer.questionId]: answer
-      }
+      answers: { ...prev.answers, [questionId]: answer }
     }));
+
+    // Guardar en Supabase si tenemos surveyId
+    const surveyId = localStorage.getItem("currentSurveyId");
+    if (surveyId) {
+      try {
+        await surveyService.saveResponse({
+          surveyId,
+          questionId,
+          answerValue: answer.value,
+          isNotMyRole: answer.isNotMyRole
+        });
+      } catch (error) {
+        console.error("Error saving response:", error);
+      }
+    }
   };
 
   const setCurrentCategory = (category: CategoryId) => {
@@ -38,19 +64,38 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   const markCategoryComplete = (category: CategoryId) => {
     setState(prev => ({
       ...prev,
-      completedCategories: prev.completedCategories.includes(category)
-        ? prev.completedCategories
-        : [...prev.completedCategories, category]
+      completedCategories: [...new Set([...prev.completedCategories, category])]
     }));
   };
 
   const resetSurvey = () => {
     setState(initialState);
+    localStorage.removeItem("surveyState");
+    localStorage.removeItem("currentSurveyId");
+    localStorage.removeItem("surveyEmail");
   };
 
   const getProgress = () => {
     const totalCategories = 11;
     return Math.round((state.completedCategories.length / totalCategories) * 100);
+  };
+
+  const saveToDatabaseAndSendEmail = async () => {
+    const surveyId = localStorage.getItem("currentSurveyId");
+    const email = localStorage.getItem("surveyEmail");
+
+    if (!surveyId || !email) {
+      throw new Error("Missing survey information");
+    }
+
+    // Marcar encuesta como completada
+    await surveyService.completeSurvey(surveyId);
+
+    // Obtener survey con token para el email
+    const survey = await surveyService.getSurveyByToken("");
+    
+    // Enviar email con resumen
+    await surveyService.sendSurveyEmail(email, survey.unique_link_token, state.answers);
   };
 
   return (
@@ -61,7 +106,8 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
         setCurrentCategory,
         markCategoryComplete,
         resetSurvey,
-        getProgress
+        getProgress,
+        saveToDatabaseAndSendEmail
       }}
     >
       {children}

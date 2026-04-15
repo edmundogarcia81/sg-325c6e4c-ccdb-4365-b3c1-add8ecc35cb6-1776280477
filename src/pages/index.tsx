@@ -1,42 +1,57 @@
 import { useState, useEffect } from "react";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { useRouter } from "next/router";
+import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { SurveyProgress } from "@/components/SurveyProgress";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useSurvey } from "@/contexts/SurveyContext";
+import { useToast } from "@/hooks/use-toast";
 import { categories, questions } from "@/lib/surveyData";
 import type { CategoryId } from "@/types/survey";
 
 export default function Home() {
-  const { state, setAnswer, setCurrentCategory, markCategoryComplete, getProgress } = useSurvey();
+  const router = useRouter();
+  const { toast } = useToast();
+  const { state, setAnswer, setCurrentCategory, markCategoryComplete, getProgress, saveToDatabaseAndSendEmail } = useSurvey();
   const [showValidation, setShowValidation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    // Verificar que tengamos email y surveyId
+    const surveyId = localStorage.getItem("currentSurveyId");
+    const email = localStorage.getItem("surveyEmail");
+    
+    if (!surveyId || !email) {
+      router.push("/start");
+    }
+  }, [router]);
 
   const currentCategoryQuestions = questions.filter(
-    (q) => q.category === state.currentCategory
+    q => q.category === state.currentCategory
   );
 
-  const currentCategoryIndex = categories.findIndex((c) => c.id === state.currentCategory);
+  const currentCategoryIndex = categories.findIndex(c => c.id === state.currentCategory);
   const isLastCategory = currentCategoryIndex === categories.length - 1;
 
   const getCurrentCategoryAnswers = () => {
-    return currentCategoryQuestions.filter((q) => {
+    return currentCategoryQuestions.filter(q => {
       const answer = state.answers[q.id];
       return answer && (answer.value !== null || answer.isNotMyRole);
     }).length;
   };
 
   const areRequiredQuestionsAnswered = () => {
-    return currentCategoryQuestions.
-    filter((q) => q.required).
-    every((q) => {
-      const answer = state.answers[q.id];
-      return answer && (answer.value !== null || answer.isNotMyRole);
-    });
+    return currentCategoryQuestions
+      .filter(q => q.required)
+      .every(q => {
+        const answer = state.answers[q.id];
+        return answer && (answer.value !== null || answer.isNotMyRole);
+      });
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!areRequiredQuestionsAnswered()) {
       setShowValidation(true);
       return;
@@ -49,6 +64,31 @@ export default function Home() {
       setCurrentCategory(nextCategory.id);
       setShowValidation(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Última categoría - enviar email y mostrar confirmación
+      setIsSubmitting(true);
+      try {
+        await saveToDatabaseAndSendEmail();
+        
+        toast({
+          title: "¡Encuesta completada!",
+          description: "Hemos enviado un resumen a su correo electrónico con una liga para ver las estadísticas."
+        });
+
+        // Redirigir a página de confirmación después de 2 segundos
+        setTimeout(() => {
+          router.push("/thank-you");
+        }, 2000);
+      } catch (error) {
+        console.error("Error submitting survey:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Hubo un problema al enviar la encuesta. Por favor intente nuevamente."
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -173,26 +213,36 @@ export default function Home() {
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentCategoryIndex === 0}>
+                  disabled={currentCategoryIndex === 0 || isSubmitting}>
                   
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Anterior
                 </Button>
 
-                {isLastCategory ?
+                {isLastCategory ? (
                 <Button
                   onClick={handleNext}
-                  className="bg-accent hover:bg-accent/90">
+                  className="bg-accent hover:bg-accent/90"
+                  disabled={isSubmitting}>
                   
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Finalizar Encuesta
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4 mr-2" />
+                        Finalizar Encuesta
+                      </>
+                    )}
                   </Button> :
 
-                <Button onClick={handleNext}>
+                <Button onClick={handleNext} disabled={isSubmitting}>
                     Siguiente
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                }
+                )}
               </div>
             </main>
           </div>
