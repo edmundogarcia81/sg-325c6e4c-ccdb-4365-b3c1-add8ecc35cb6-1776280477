@@ -220,11 +220,10 @@ export default function Home() {
                 </Button>
 
                 {isLastCategory ? (
-                <Button
-                  onClick={handleNext}
-                  className="bg-accent hover:bg-accent/90"
-                  disabled={isSubmitting}>
-                  
+                  <Button
+                    onClick={handleNext}
+                    className="bg-accent hover:bg-accent/90"
+                    disabled={isSubmitting}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -236,9 +235,9 @@ export default function Home() {
                         Finalizar Encuesta
                       </>
                     )}
-                  </Button> :
-
-                <Button onClick={handleNext} disabled={isSubmitting}>
+                  </Button>
+                ) : (
+                  <Button onClick={handleNext} disabled={isSubmitting}>
                     Siguiente
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
@@ -248,6 +247,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </>);
-
+    </>
+  );
 }
