@@ -60,6 +60,7 @@ export default function SurveyResults() {
           answerMap[question.category] = {};
         }
         answerMap[question.category][response.question_id] = {
+          questionId: response.question_id,
           value: response.answer_value,
           isNotMyRole: response.is_not_my_role
         };

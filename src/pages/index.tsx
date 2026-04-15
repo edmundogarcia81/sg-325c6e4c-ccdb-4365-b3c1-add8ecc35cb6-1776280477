@@ -203,7 +203,7 @@ export default function Home() {
                   key={question.id}
                   question={question}
                   answer={state.answers[question.id]}
-                  onAnswer={setAnswer}
+                  onAnswer={(answer) => setAnswer(question.id, answer)}
                   questionNumber={index + 1} />
 
                 )}
