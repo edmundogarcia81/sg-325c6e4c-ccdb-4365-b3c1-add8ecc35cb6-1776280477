@@ -1,138 +1,125 @@
-import { useState } from "react";
-import { AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent } from "@/components/ui/card";
-import type { Question, Answer } from "@/types/survey";
-import { cn } from "@/lib/utils";
+import type { Question } from "@/services/surveyConfigService";
+import type { Tables } from "@/integrations/supabase/types";
+
+type SurveyResponse = Tables<"survey_responses">;
 
 interface QuestionCardProps {
   question: Question;
-  answer?: Answer;
-  onAnswer: (answer: Answer) => void;
-  questionNumber: number;
+  response?: SurveyResponse;
+  onResponseChange: (questionId: string, value: string | null, isNotMyRole: boolean) => void;
 }
 
-export function QuestionCard({ question, answer, onAnswer, questionNumber }: QuestionCardProps) {
-  const [isNotMyRole, setIsNotMyRole] = useState(answer?.isNotMyRole || false);
+export function QuestionCard({ question, response, onResponseChange }: QuestionCardProps) {
+  const [selectedValue, setSelectedValue] = useState<string>(response?.answer_value || "");
+  const [isNotMyRole, setIsNotMyRole] = useState(response?.is_not_my_role || false);
 
-  const handleChoiceChange = (value: string) => {
-    onAnswer({
-      questionId: question.id,
-      value: value,
-      isNotMyRole: false
-    });
+  useEffect(() => {
+    setSelectedValue(response?.answer_value || "");
+    setIsNotMyRole(response?.is_not_my_role || false);
+  }, [response]);
+
+  const handleValueChange = (value: string) => {
+    setSelectedValue(value);
     setIsNotMyRole(false);
+    onResponseChange(question.id, value, false);
   };
 
-  const handleOpenTextChange = (text: string) => {
-    onAnswer({
-      questionId: question.id,
-      value: text,
-      isNotMyRole: false
-    });
-    setIsNotMyRole(false);
+  const handleNotMyRoleChange = (checked: boolean) => {
+    setIsNotMyRole(checked);
+    if (checked) {
+      setSelectedValue("");
+      onResponseChange(question.id, null, true);
+    } else {
+      onResponseChange(question.id, selectedValue || null, false);
+    }
   };
 
-  const handleNotMyRoleToggle = () => {
-    const newIsNotMyRole = !isNotMyRole;
-    setIsNotMyRole(newIsNotMyRole);
-    onAnswer({
-      questionId: question.id,
-      value: null,
-      isNotMyRole: newIsNotMyRole
-    });
-  };
+  // Parse options from JSONB string
+  const options = question.options ? 
+    (typeof question.options === "string" ? JSON.parse(question.options) : question.options) 
+    : [];
 
   return (
-    <Card className={cn(
-      "transition-all",
-      isNotMyRole && "opacity-60 bg-muted/30"
-    )}>
+    <Card className="border-2 hover:border-primary/20 transition-colors">
       <CardContent className="p-6">
         <div className="space-y-4">
-          <div>
-            <div className="flex items-start gap-3 mb-2">
-              <span className="text-sm font-semibold text-primary shrink-0 mt-0.5">
-                {questionNumber}.
-              </span>
-              <div className="flex-1">
-                <h3 className="font-medium text-foreground mb-1">
-                  {question.text}
-                  {question.required && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
-                </h3>
-                {question.description && (
-                  <p className="text-sm text-muted-foreground">
-                    {question.description}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+          <Label className="text-base font-medium leading-relaxed block">
+            {question.text}
+          </Label>
 
           {!isNotMyRole && (
-            <div className="pl-8">
-              {question.type === "choice" && question.options && (
+            <>
+              {question.type === "likert" && options.length > 0 && (
                 <RadioGroup
-                  value={(answer?.value as string) || ""}
-                  onValueChange={handleChoiceChange}
+                  value={selectedValue}
+                  onValueChange={handleValueChange}
                   className="space-y-3"
                 >
-                  {question.options.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-3">
-                      <RadioGroupItem
-                        value={option.value}
-                        id={`${question.id}-${option.value}`}
-                      />
+                  {options.map((option: string, index: number) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <RadioGroupItem value={option} id={`${question.id}-${index}`} className="mt-1" />
                       <Label
-                        htmlFor={`${question.id}-${option.value}`}
-                        className="text-sm font-normal cursor-pointer leading-snug"
+                        htmlFor={`${question.id}-${index}`}
+                        className="font-normal leading-relaxed cursor-pointer flex-1"
                       >
-                        {option.label}
+                        {option}
                       </Label>
                     </div>
                   ))}
                 </RadioGroup>
               )}
 
-              {question.type === "open" && (
-                <div>
-                  <Textarea
-                    value={(answer?.value as string) || ""}
-                    onChange={(e) => handleOpenTextChange(e.target.value)}
-                    placeholder="Describa áreas de oportunidad o detalles adicionales..."
-                    className="min-h-[120px] resize-none focus-visible:ring-primary"
-                  />
-                  <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Las respuestas abiertas son obligatorias para entender los requerimientos únicos de UNICCO
-                  </p>
-                </div>
+              {question.type === "yesno" && (
+                <RadioGroup
+                  value={selectedValue}
+                  onValueChange={handleValueChange}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="Sí" id={`${question.id}-yes`} />
+                    <Label htmlFor={`${question.id}-yes`} className="font-normal cursor-pointer">
+                      Sí
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <RadioGroupItem value="No" id={`${question.id}-no`} />
+                    <Label htmlFor={`${question.id}-no`} className="font-normal cursor-pointer">
+                      No
+                    </Label>
+                  </div>
+                </RadioGroup>
               )}
-            </div>
+
+              {question.type === "open" && (
+                <Textarea
+                  value={selectedValue}
+                  onChange={(e) => handleValueChange(e.target.value)}
+                  placeholder="Escriba su respuesta aquí..."
+                  className="min-h-[120px] resize-none"
+                />
+              )}
+            </>
           )}
 
-          {question.allowNotMyRole && (
-            <div className="pl-8 pt-4 mt-2 border-t border-border">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id={`${question.id}-not-my-role`}
-                  checked={isNotMyRole}
-                  onCheckedChange={handleNotMyRoleToggle}
-                />
-                <Label
-                  htmlFor={`${question.id}-not-my-role`}
-                  className="text-sm text-muted-foreground font-medium cursor-pointer"
-                >
-                  No tengo la visibilidad de este proceso / No aplica a mi rol
-                </Label>
-              </div>
-            </div>
-          )}
+          <div className="flex items-center space-x-2 pt-4 border-t border-border">
+            <Checkbox
+              id={`${question.id}-not-my-role`}
+              checked={isNotMyRole}
+              onCheckedChange={handleNotMyRoleChange}
+            />
+            <Label
+              htmlFor={`${question.id}-not-my-role`}
+              className="text-sm text-muted-foreground cursor-pointer"
+            >
+              No es mi rol / No aplica
+            </Label>
+          </div>
         </div>
       </CardContent>
     </Card>
