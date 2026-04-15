@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                                   <span className="text-sm font-bold text-primary">{question.id.split("-")[1]}</span>
                                 </div>
                                 <div className="flex-1">
-                                  <h4 className="font-semibold text-foreground mb-2">{question.question}</h4>
+                                  <h4 className="font-semibold text-foreground mb-2">{question.text}</h4>
                                   <div className="flex flex-wrap gap-4 text-sm">
                                     <div className="flex items-center gap-2">
                                       <div className="w-2 h-2 bg-primary rounded-full"></div>
