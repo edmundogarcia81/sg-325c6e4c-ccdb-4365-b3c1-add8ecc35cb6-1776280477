@@ -126,7 +126,6 @@ export default function Home() {
 
           <div className="grid lg:grid-cols-[380px_1fr] gap-8">
             <SurveyProgress
-              categories={categories}
               currentCategory={state.currentCategory}
               completedCategories={state.completedCategories}
               onSelectCategory={handleCategorySelect}
