@@ -85,129 +85,129 @@ export function QuestionCard({ question, answer, onAnswer, questionNumber }: Que
                 {questionNumber}.
               </span>
               <div className="flex-1">
-                <h3 className="font-medium text-foreground mb-1">
-                  {question.text}
-                  {question.required && (
-                    <span className="text-destructive ml-1">*</span>
-                  )}
+                <h3 className="font-medium text-foreground mb-1">¿Puede registrar las comisiones o intereses en la facturacion?*
+
+
+
+
                 </h3>
-                {question.description && (
-                  <p className="text-sm text-muted-foreground">
+                {question.description &&
+                <p className="text-sm text-muted-foreground">
                     {question.description}
                   </p>
-                )}
+                }
               </div>
             </div>
           </div>
 
-          {!isNotMyRole && (
-            <div className="pl-8">
-              {question.type === "likert" && (
-                <RadioGroup
-                  value={answer?.value?.toString()}
-                  onValueChange={handleLikertChange}
-                  className="space-y-2"
-                >
-                  {([1, 2, 3, 4, 5] as LikertValue[]).map((value) => (
-                    <div key={value} className="flex items-center space-x-3">
+          {!isNotMyRole &&
+          <div className="pl-8">
+              {question.type === "likert" &&
+            <RadioGroup
+              value={answer?.value?.toString()}
+              onValueChange={handleLikertChange}
+              className="space-y-2">
+              
+                  {([1, 2, 3, 4, 5] as LikertValue[]).map((value) =>
+              <div key={value} className="flex items-center space-x-3">
                       <RadioGroupItem value={value.toString()} id={`${question.id}-${value}`} />
                       <Label
-                        htmlFor={`${question.id}-${value}`}
-                        className="text-sm font-normal cursor-pointer"
-                      >
+                  htmlFor={`${question.id}-${value}`}
+                  className="text-sm font-normal cursor-pointer">
+                  
                         {value} - {likertLabels[value]}
                       </Label>
                     </div>
-                  ))}
-                </RadioGroup>
               )}
+                </RadioGroup>
+            }
 
-              {question.type === "boolean" && (
-                <RadioGroup
-                  value={answer?.value?.toString()}
-                  onValueChange={handleBooleanChange}
-                  className="space-y-2"
-                >
+              {question.type === "boolean" &&
+            <RadioGroup
+              value={answer?.value?.toString()}
+              onValueChange={handleBooleanChange}
+              className="space-y-2">
+              
                   <div className="flex items-center space-x-3">
                     <RadioGroupItem value="true" id={`${question.id}-yes`} />
                     <Label
-                      htmlFor={`${question.id}-yes`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
+                  htmlFor={`${question.id}-yes`}
+                  className="text-sm font-normal cursor-pointer">
+                  
                       Sí
                     </Label>
                   </div>
                   <div className="flex items-center space-x-3">
                     <RadioGroupItem value="false" id={`${question.id}-no`} />
                     <Label
-                      htmlFor={`${question.id}-no`}
-                      className="text-sm font-normal cursor-pointer"
-                    >
+                  htmlFor={`${question.id}-no`}
+                  className="text-sm font-normal cursor-pointer">
+                  
                       No
                     </Label>
                   </div>
                 </RadioGroup>
-              )}
+            }
 
-              {question.type === "open" && (
-                <div>
+              {question.type === "open" &&
+            <div>
                   <Textarea
-                    value={(answer?.value as string) || ""}
-                    onChange={(e) => handleOpenTextChange(e.target.value)}
-                    placeholder="Describa los procesos, desafíos o brechas que enfrenta..."
-                    className="min-h-[120px] resize-none"
-                  />
+                value={answer?.value as string || ""}
+                onChange={(e) => handleOpenTextChange(e.target.value)}
+                placeholder="Describa los procesos, desafíos o brechas que enfrenta..."
+                className="min-h-[120px] resize-none" />
+              
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1.5">
                     <AlertCircle className="w-3.5 h-3.5" />
                     Esta información ayudará a identificar áreas de mejora específicas
                   </p>
                 </div>
-              )}
+            }
 
-              {question.type === "multiple" && question.options && (
-                <RadioGroup
-                  value={Array.isArray(answer?.value) ? answer.value[0] : ""}
-                  onValueChange={handleMultipleChange}
-                  className="space-y-2"
-                >
-                  {question.options.map((option) => (
-                    <div key={option.value} className="flex items-center space-x-3">
+              {question.type === "multiple" && question.options &&
+            <RadioGroup
+              value={Array.isArray(answer?.value) ? answer.value[0] : ""}
+              onValueChange={handleMultipleChange}
+              className="space-y-2">
+              
+                  {question.options.map((option) =>
+              <div key={option.value} className="flex items-center space-x-3">
                       <RadioGroupItem
-                        value={option.value}
-                        id={`${question.id}-${option.value}`}
-                      />
+                  value={option.value}
+                  id={`${question.id}-${option.value}`} />
+                
                       <Label
-                        htmlFor={`${question.id}-${option.value}`}
-                        className="text-sm font-normal cursor-pointer"
-                      >
+                  htmlFor={`${question.id}-${option.value}`}
+                  className="text-sm font-normal cursor-pointer">
+                  
                         {option.label}
                       </Label>
                     </div>
-                  ))}
-                </RadioGroup>
               )}
+                </RadioGroup>
+            }
             </div>
-          )}
+          }
 
-          {question.allowNotMyRole && (
-            <div className="pl-8 pt-2 border-t border-border">
+          {question.allowNotMyRole &&
+          <div className="pl-8 pt-2 border-t border-border">
               <div className="flex items-center space-x-2">
                 <Checkbox
-                  id={`${question.id}-not-my-role`}
-                  checked={isNotMyRole}
-                  onCheckedChange={handleNotMyRoleToggle}
-                />
+                id={`${question.id}-not-my-role`}
+                checked={isNotMyRole}
+                onCheckedChange={handleNotMyRoleToggle} />
+              
                 <Label
-                  htmlFor={`${question.id}-not-my-role`}
-                  className="text-sm text-muted-foreground font-normal cursor-pointer"
-                >
+                htmlFor={`${question.id}-not-my-role`}
+                className="text-sm text-muted-foreground font-normal cursor-pointer">
+                
                   No es mi rol / No aplica
                 </Label>
               </div>
             </div>
-          )}
+          }
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>);
+
 }
