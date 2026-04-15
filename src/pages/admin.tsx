@@ -67,18 +67,6 @@ type Survey = Tables<"surveys"> & {
 
 const ADMIN_PASSWORD = "unicco2026";
 
-interface CategoryStats {
-  categoryId: string;
-  categoryTitle: string;
-  totalQuestions: number;
-  totalResponses: number;
-  notMyRoleCount: number;
-  mostCommonAnswer: string;
-  mostCommonCount: number;
-  averageScore: number;
-  responseDistribution: { [key: string]: number };
-}
-
 export default function AdminPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -176,7 +164,6 @@ export default function AdminPage() {
         }
       });
 
-      // Si es una pregunta de opciones largas, tratamos de acortar la respuesta más común
       if (mostCommonAnswer.length > 50) {
         mostCommonAnswer = mostCommonAnswer.substring(0, 47) + "...";
       }
@@ -564,6 +551,10 @@ export default function AdminPage() {
                 <TrendingUp className="w-4 h-4" />
                 Estadísticas
               </TabsTrigger>
+              <TabsTrigger value="config" className="gap-2">
+                <Settings className="w-4 h-4" />
+                Gestión de Encuesta
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="surveys" className="space-y-4">
@@ -621,7 +612,7 @@ export default function AdminPage() {
                       variant="destructive"
                       size="sm"
                       onClick={handleDeleteMultiple}
-                      className="gap-2"
+                      className="gap-2 mb-4"
                     >
                       <Trash2 className="w-4 h-4" />
                       Eliminar Seleccionadas ({selectedSurveys.length})
@@ -818,13 +809,13 @@ export default function AdminPage() {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2">
                                 <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                                <Badge variant="secondary" className="text-xs">
-                                  {category.description}
-                                </Badge>
+                                <h4 className="font-semibold text-sm truncate">{category.title}</h4>
                               </div>
-                              <p className="text-sm">{category.title}</p>
+                              <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                {category.description}
+                              </p>
                             </div>
                             <div className="flex items-center gap-1 flex-shrink-0">
                               <Button
@@ -925,160 +916,160 @@ export default function AdminPage() {
               </div>
             </TabsContent>
           </Tabs>
-
-          {/* Delete Confirmation Dialog */}
-          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {surveyToDelete ? (
-                    "Esta acción eliminará permanentemente esta encuesta y todas sus respuestas. Esta acción no se puede deshacer."
-                  ) : (
-                    `Esta acción eliminará permanentemente ${selectedSurveys.length} encuesta(s) y todas sus respuestas. Esta acción no se puede deshacer.`
-                  )}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                <AlertDialogAction 
-                  onClick={confirmDelete}
-                  disabled={isDeleting}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? "Eliminando..." : "Eliminar"}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-
-          {/* Category Edit Dialog */}
-          <Dialog open={editCategoryDialog} onOpenChange={setEditCategoryDialog}>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>{editingCategory ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
-                <DialogDescription>
-                  {editingCategory ? "Modifica los datos de la categoría" : "Crea una nueva categoría para la encuesta"}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cat-title">Título</Label>
-                  <Input
-                    id="cat-title"
-                    value={categoryForm.title}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Ej: Gestión de Ingresos"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="cat-desc">Descripción</Label>
-                  <Textarea
-                    id="cat-desc"
-                    value={categoryForm.description}
-                    onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Descripción breve de la categoría"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setEditCategoryDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSaveCategory} disabled={!categoryForm.title.trim()}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Question Edit Dialog */}
-          <Dialog open={editQuestionDialog} onOpenChange={setEditQuestionDialog}>
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingQuestion ? "Editar Pregunta" : "Nueva Pregunta"}</DialogTitle>
-                <DialogDescription>
-                  {editingQuestion ? "Modifica los datos de la pregunta" : "Crea una nueva pregunta para esta categoría"}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="q-type">Tipo de Pregunta</Label>
-                  <Select
-                    value={questionForm.type}
-                    onValueChange={(value: "likert" | "yesno" | "open") => 
-                      setQuestionForm(prev => ({ ...prev, type: value }))
-                    }
-                  >
-                    <SelectTrigger id="q-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="likert">Escala Likert</SelectItem>
-                      <SelectItem value="yesno">Sí/No</SelectItem>
-                      <SelectItem value="open">Abierta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="q-text">Texto de la Pregunta</Label>
-                  <Textarea
-                    id="q-text"
-                    value={questionForm.text}
-                    onChange={(e) => setQuestionForm(prev => ({ ...prev, text: e.target.value }))}
-                    placeholder="Escribe la pregunta..."
-                    rows={3}
-                  />
-                </div>
-
-                {questionForm.type === "likert" && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label>Opciones de Respuesta</Label>
-                      <Button variant="outline" size="sm" onClick={addOption} className="gap-2">
-                        <Plus className="w-3 h-3" />
-                        Agregar
-                      </Button>
-                    </div>
-                    <div className="space-y-2">
-                      {questionForm.options.map((option, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <Input
-                            value={option}
-                            onChange={(e) => updateOption(index, e.target.value)}
-                            placeholder={`Opción ${index + 1}`}
-                          />
-                          {questionForm.options.length > 1 && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeOption(index)}
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setEditQuestionDialog(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleSaveQuestion} disabled={!questionForm.text.trim()}>
-                  <Save className="w-4 h-4 mr-2" />
-                  Guardar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {surveyToDelete ? (
+                "Esta acción eliminará permanentemente esta encuesta y todas sus respuestas. Esta acción no se puede deshacer."
+              ) : (
+                `Esta acción eliminará permanentemente ${selectedSurveys.length} encuesta(s) y todas sus respuestas. Esta acción no se puede deshacer.`
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Category Edit Dialog */}
+      <Dialog open={editCategoryDialog} onOpenChange={setEditCategoryDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
+            <DialogDescription>
+              {editingCategory ? "Modifica los datos de la categoría" : "Crea una nueva categoría para la encuesta"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="cat-title">Título</Label>
+              <Input
+                id="cat-title"
+                value={categoryForm.title}
+                onChange={(e) => setCategoryForm(prev => ({ ...prev, title: e.target.value }))}
+                placeholder="Ej: Gestión de Ingresos"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cat-desc">Descripción</Label>
+              <Textarea
+                id="cat-desc"
+                value={categoryForm.description}
+                onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Descripción breve de la categoría"
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditCategoryDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveCategory} disabled={!categoryForm.title.trim()}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Question Edit Dialog */}
+      <Dialog open={editQuestionDialog} onOpenChange={setEditQuestionDialog}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingQuestion ? "Editar Pregunta" : "Nueva Pregunta"}</DialogTitle>
+            <DialogDescription>
+              {editingQuestion ? "Modifica los datos de la pregunta" : "Crea una nueva pregunta para esta categoría"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="q-type">Tipo de Pregunta</Label>
+              <Select
+                value={questionForm.type}
+                onValueChange={(value: "likert" | "yesno" | "open") => 
+                  setQuestionForm(prev => ({ ...prev, type: value }))
+                }
+              >
+                <SelectTrigger id="q-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="likert">Escala Likert</SelectItem>
+                  <SelectItem value="yesno">Sí/No</SelectItem>
+                  <SelectItem value="open">Abierta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="q-text">Texto de la Pregunta</Label>
+              <Textarea
+                id="q-text"
+                value={questionForm.text}
+                onChange={(e) => setQuestionForm(prev => ({ ...prev, text: e.target.value }))}
+                placeholder="Escribe la pregunta..."
+                rows={3}
+              />
+            </div>
+
+            {questionForm.type === "likert" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Opciones de Respuesta</Label>
+                  <Button variant="outline" size="sm" onClick={addOption} className="gap-2">
+                    <Plus className="w-3 h-3" />
+                    Agregar
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {questionForm.options.map((option, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={option}
+                        onChange={(e) => updateOption(index, e.target.value)}
+                        placeholder={`Opción ${index + 1}`}
+                      />
+                      {questionForm.options.length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeOption(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditQuestionDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveQuestion} disabled={!questionForm.text.trim()}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
