@@ -2,375 +2,530 @@ import type { Category, Question } from "@/types/survey";
 
 export const categories: Category[] = [
   {
+    id: "general",
+    title: "1. Evaluación general",
+    description: "Relevancia y resolución de retos",
+    icon: "Puzzle"
+  },
+  {
+    id: "e2e",
+    title: "2. Flujo completo",
+    description: "Visión end-to-end integrada",
+    icon: "RefreshCw"
+  },
+  {
     id: "revenue",
-    title: "Gestión de Ingresos",
-    description: "Contratos, intereses y comisiones",
+    title: "3. Gestión de ingresos",
+    description: "Acuerdos globales y contratos",
     icon: "TrendingUp"
   },
   {
     id: "expenses",
-    title: "Control de Egresos",
-    description: "Validación XML SAT y pagos",
+    title: "4. Control de egresos",
+    description: "XML SAT, autorizaciones y pagos",
     icon: "Receipt"
   },
   {
     id: "reconciliation",
-    title: "Conciliación Bancaria",
-    description: "Automatización y control",
+    title: "5. Conciliación bancaria",
+    description: "Integración con bancos y tiempos",
     icon: "Building2"
   },
   {
     id: "cashflow",
-    title: "Flujo de Efectivo",
-    description: "Proyecciones y análisis",
+    title: "6. Flujo de efectivo",
+    description: "Proyección y liquidez",
     icon: "Waves"
   },
   {
     id: "tax",
-    title: "Cumplimiento Fiscal",
-    description: "CFDI 4.0 y reportes SAT",
+    title: "7. Cumplimiento fiscal",
+    description: "CFDI y contabilidad electrónica",
     icon: "FileText"
   },
   {
     id: "assets",
-    title: "Activos Fijos",
-    description: "Depreciación e inventario",
+    title: "8. Activos fijos",
+    description: "Control automatizado y depreciación",
     icon: "Package"
   },
   {
     id: "reporting",
-    title: "Reporteo Financiero",
-    description: "Estados financieros y dashboards",
+    title: "9. Reporteo financiero",
+    description: "Estados en tiempo real y drill-down",
     icon: "BarChart3"
+  },
+  {
+    id: "priority",
+    title: "10. Prioridad del proyecto",
+    description: "Viabilidad y horizonte",
+    icon: "Rocket"
+  },
+  {
+    id: "closing",
+    title: "11. Cierre estratégico",
+    description: "Impacto final en la organización",
+    icon: "MessageSquare"
   }
 ];
 
 export const questions: Question[] = [
-  // ========== GESTIÓN DE INGRESOS ==========
+  // ========== 1. Evaluación general de la solución ==========
+  {
+    id: "gen-001",
+    type: "choice",
+    category: "general",
+    text: "¿Qué tan relevante considera la solución presentada para mejorar su operación financiera?",
+    options: [
+      { value: "Muy relevante", label: "Muy relevante (impacto directo inmediato)" },
+      { value: "Relevante", label: "Relevante (mejoras importantes)" },
+      { value: "Parcialmente relevante", label: "Parcialmente relevante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "gen-002",
+    type: "choice",
+    category: "general",
+    text: "¿Qué tanto considera que SAP Business One puede resolver sus retos actuales?",
+    options: [
+      { value: "Resuelve completamente", label: "Resuelve completamente" },
+      { value: "Resuelve en gran medida", label: "Resuelve en gran medida" },
+      { value: "Resuelve parcialmente", label: "Resuelve parcialmente" },
+      { value: "No es claro", label: "No es claro" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "gen-003",
+    type: "open",
+    category: "general",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    description: "Mencione cualquier funcionalidad o caso de uso que no sienta cubierto.",
+    required: true,
+    allowNotMyRole: true
+  },
+
+  // ========== 2. Flujo completo del dinero (end-to-end) ==========
+  {
+    id: "e2e-001",
+    type: "choice",
+    category: "e2e",
+    text: "¿Qué valor le ve a tener el flujo completo del dinero integrado en un solo sistema?",
+    options: [
+      { value: "Muy alto", label: "Muy alto (crítico para la operación)" },
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "e2e-002",
+    type: "choice",
+    category: "e2e",
+    text: "¿Qué tanto impacto tendría automatizar este flujo en su operación?",
+    options: [
+      { value: "Alto impacto", label: "Alto impacto (transformación total)" },
+      { value: "Medio impacto", label: "Medio impacto" },
+      { value: "Bajo impacto", label: "Bajo impacto" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "e2e-003",
+    type: "open",
+    category: "e2e",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
+    allowNotMyRole: true
+  },
+
+  // ========== 3. Gestión de ingresos (Acuerdos Globales) ==========
   {
     id: "rev-001",
-    type: "likert",
+    type: "choice",
     category: "revenue",
-    text: "¿El sistema gestiona contratos de crédito con cálculo automático de intereses?",
-    description: "Evalúe la automatización en la gestión de contratos y generación de intereses",
+    text: "¿Qué tan valioso considera el manejo de contratos (acuerdos globales) dentro del sistema?",
+    options: [
+      { value: "Muy valioso", label: "Muy valioso" },
+      { value: "Valioso", label: "Valioso" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rev-002",
-    type: "likert",
+    type: "choice",
     category: "revenue",
-    text: "¿Se calculan y registran automáticamente las comisiones por operación?",
+    text: "¿Qué impacto tendría la automatización de ingresos (intereses y comisiones)?",
+    options: [
+      { value: "Alto", label: "Alto (reduce errores y carga operativa)" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rev-003",
-    type: "boolean",
+    type: "choice",
     category: "revenue",
-    text: "¿Existe trazabilidad completa de cada ingreso desde su origen hasta el estado de cuenta?",
+    text: "¿Qué tanto valor aporta la trazabilidad completa del ingreso hasta el contrato?",
+    options: [
+      { value: "Crítico", label: "Crítico (auditoría / control)" },
+      { value: "Importante", label: "Importante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rev-004",
-    type: "likert",
+    type: "open",
     category: "revenue",
-    text: "¿El sistema valida automáticamente que los ingresos correspondan a los contratos vigentes?",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
     required: true,
     allowNotMyRole: true
   },
-  {
-    id: "rev-005",
-    type: "open",
-    category: "revenue",
-    text: "¿Qué funcionalidades relacionadas con la gestión de ingresos NO están cubiertas por su sistema actual?",
-    description: "Describa procesos manuales, workarounds o áreas donde necesita mejorar",
-    required: false,
-    allowNotMyRole: true
-  },
 
-  // ========== CONTROL DE EGRESOS ==========
+  // ========== 4. Control de egresos ==========
   {
     id: "exp-001",
-    type: "likert",
+    type: "choice",
     category: "expenses",
-    text: "¿El sistema valida automáticamente los XML del SAT contra las facturas recibidas?",
-    description: "Validación de CFDI recibidos",
+    text: "¿Qué tan importante es para su operación validar XML contra SAT automáticamente?",
+    options: [
+      { value: "Crítico", label: "Crítico" },
+      { value: "Importante", label: "Importante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "exp-002",
-    type: "likert",
+    type: "choice",
     category: "expenses",
-    text: "¿Existe un flujo de aprobación digital para pagos con múltiples niveles de autorización?",
+    text: "¿Qué valor le ve a prevenir pagos duplicados de forma automática?",
+    options: [
+      { value: "Muy alto", label: "Muy alto" },
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "exp-003",
-    type: "boolean",
+    type: "choice",
     category: "expenses",
-    text: "¿Se generan automáticamente las pólizas contables al registrar un egreso?",
+    text: "¿Qué impacto tendría implementar flujos de autorización digital?",
+    options: [
+      { value: "Alto", label: "Alto (control total)" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "exp-004",
-    type: "likert",
-    category: "expenses",
-    text: "¿El sistema permite programar pagos recurrentes y gestionar sus vencimientos?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "exp-005",
-    type: "boolean",
-    category: "expenses",
-    text: "¿Se integra el sistema con bancos para ejecutar pagos electrónicos?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "exp-006",
     type: "open",
     category: "expenses",
-    text: "¿Qué controles de egresos o validaciones NO realiza su sistema actual?",
-    required: false,
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
     allowNotMyRole: true
   },
 
-  // ========== CONCILIACIÓN BANCARIA ==========
+  // ========== 5. Conciliación bancaria ==========
   {
     id: "rec-001",
-    type: "likert",
+    type: "choice",
     category: "reconciliation",
-    text: "¿El sistema concilia automáticamente los estados de cuenta bancarios vs registros contables?",
+    text: "¿Qué tan valiosa considera la conciliación bancaria automatizada?",
+    options: [
+      { value: "Muy valiosa", label: "Muy valiosa" },
+      { value: "Valiosa", label: "Valiosa" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rec-002",
-    type: "multiple",
+    type: "choice",
     category: "reconciliation",
-    text: "¿Con qué frecuencia realizan la conciliación bancaria?",
+    text: "¿Qué impacto tendría reducir tiempos de conciliación?",
     options: [
-      { value: "daily", label: "Diaria" },
-      { value: "weekly", label: "Semanal" },
-      { value: "biweekly", label: "Quincenal" },
-      { value: "monthly", label: "Mensual" },
-      { value: "irregular", label: "Irregular/según necesidad" }
+      { value: "Alto", label: "Alto (mejora operativa significativa)" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
     ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rec-003",
-    type: "likert",
+    type: "choice",
     category: "reconciliation",
-    text: "¿El sistema identifica y sugiere coincidencias entre movimientos bancarios y registros contables?",
+    text: "¿Qué valor le ve a la integración directa con bancos?",
+    options: [
+      { value: "Crítico", label: "Crítico" },
+      { value: "Importante", label: "Importante" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rec-004",
-    type: "boolean",
+    type: "open",
     category: "reconciliation",
-    text: "¿Se generan reportes automáticos de partidas en tránsito y pendientes de conciliar?",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
     required: true,
     allowNotMyRole: true
   },
-  {
-    id: "rec-005",
-    type: "open",
-    category: "reconciliation",
-    text: "¿Qué desafíos enfrenta en el proceso de conciliación bancaria que su sistema no resuelve?",
-    required: false,
-    allowNotMyRole: true
-  },
 
-  // ========== FLUJO DE EFECTIVO ==========
+  // ========== 6. Flujo de efectivo y liquidez ==========
   {
     id: "cash-001",
-    type: "likert",
+    type: "choice",
     category: "cashflow",
-    text: "¿El sistema genera proyecciones de flujo de efectivo basadas en contratos y pagos programados?",
+    text: "¿Qué tan importante es tener flujo de efectivo proyectado en tiempo real?",
+    options: [
+      { value: "Crítico", label: "Crítico para la operación" },
+      { value: "Importante", label: "Importante" },
+      { value: "Deseable", label: "Deseable" },
+      { value: "No prioritario", label: "No prioritario" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "cash-002",
-    type: "boolean",
+    type: "choice",
     category: "cashflow",
-    text: "¿Existe un dashboard en tiempo real del saldo de efectivo disponible?",
+    text: "¿Qué impacto tendría mejorar la precisión del flujo proyectado?",
+    options: [
+      { value: "Alto", label: "Alto (mejor toma de decisiones)" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "cash-003",
-    type: "likert",
-    category: "cashflow",
-    text: "¿El sistema emite alertas cuando el flujo proyectado cae por debajo de umbrales definidos?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "cash-004",
-    type: "boolean",
-    category: "cashflow",
-    text: "¿Se realiza análisis de variaciones entre flujo proyectado vs real?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "cash-005",
     type: "open",
     category: "cashflow",
-    text: "¿Qué información o análisis de flujo de efectivo NO obtiene actualmente de forma automática?",
-    required: false,
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
     allowNotMyRole: true
   },
 
-  // ========== CUMPLIMIENTO FISCAL ==========
+  // ========== 7. Cumplimiento fiscal y contabilidad electrónica ==========
   {
     id: "tax-001",
-    type: "likert",
+    type: "choice",
     category: "tax",
-    text: "¿El sistema genera y timbra CFDI 4.0 de forma automática?",
-    description: "Facturación electrónica actualizada",
+    text: "¿Qué valor le ve a tener la contabilidad 100% integrada con CFDI?",
+    options: [
+      { value: "Crítico", label: "Crítico" },
+      { value: "Importante", label: "Importante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "tax-002",
-    type: "boolean",
+    type: "choice",
     category: "tax",
-    text: "¿El sistema valida el cumplimiento de requisitos fiscales antes de timbrar?",
-    description: "Validación de RFC, uso de CFDI, forma de pago, etc.",
+    text: "¿Qué tan importante es automatizar validaciones contra SAT?",
+    options: [
+      { value: "Muy importante", label: "Muy importante" },
+      { value: "Importante", label: "Importante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "tax-003",
-    type: "likert",
+    type: "choice",
     category: "tax",
-    text: "¿Se generan automáticamente los reportes y declaraciones fiscales requeridos por el SAT?",
+    text: "¿Qué impacto tendría mejorar la preparación ante auditorías?",
+    options: [
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "tax-004",
-    type: "boolean",
+    type: "open",
     category: "tax",
-    text: "¿El sistema mantiene un histórico completo de CFDI emitidos y recibidos?",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
     required: true,
     allowNotMyRole: true
   },
-  {
-    id: "tax-005",
-    type: "open",
-    category: "tax",
-    text: "¿Qué procesos fiscales o de cumplimiento realiza manualmente que deberían automatizarse?",
-    required: false,
-    allowNotMyRole: true
-  },
 
-  // ========== ACTIVOS FIJOS ==========
+  // ========== 8. Activos fijos ==========
   {
     id: "asset-001",
-    type: "likert",
+    type: "choice",
     category: "assets",
-    text: "¿El sistema calcula automáticamente la depreciación de activos fijos?",
+    text: "¿Qué tan relevante es el control automatizado de activos fijos?",
+    options: [
+      { value: "Muy relevante", label: "Muy relevante" },
+      { value: "Relevante", label: "Relevante" },
+      { value: "Poco relevante", label: "Poco relevante" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "asset-002",
-    type: "boolean",
+    type: "choice",
     category: "assets",
-    text: "¿Existe un inventario digital de activos fijos con su ubicación física?",
+    text: "¿Qué valor le ve a calcular depreciación contable y fiscal automáticamente?",
+    options: [
+      { value: "Muy alto", label: "Muy alto" },
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "asset-003",
-    type: "likert",
-    category: "assets",
-    text: "¿El sistema controla el ciclo completo del activo (adquisición, uso, baja)?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "asset-004",
-    type: "boolean",
-    category: "assets",
-    text: "¿Se genera automáticamente la conciliación entre el registro contable y el inventario físico?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "asset-005",
     type: "open",
     category: "assets",
-    text: "¿Qué aspectos de la gestión de activos fijos NO están digitalizados?",
-    required: false,
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
     allowNotMyRole: true
   },
 
-  // ========== REPORTEO FINANCIERO ==========
+  // ========== 9. Reporteo financiero ==========
   {
     id: "rep-001",
-    type: "likert",
+    type: "choice",
     category: "reporting",
-    text: "¿El sistema genera automáticamente estados financieros (Balance, Estado de Resultados, Flujo de Efectivo)?",
+    text: "¿Qué tan importante es contar con estados financieros en tiempo real?",
+    options: [
+      { value: "Crítico", label: "Crítico" },
+      { value: "Importante", label: "Importante" },
+      { value: "Deseable", label: "Deseable" },
+      { value: "No prioritario", label: "No prioritario" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rep-002",
-    type: "multiple",
+    type: "choice",
     category: "reporting",
-    text: "¿Con qué periodicidad se generan los reportes financieros formales?",
+    text: "¿Qué valor le ve al análisis detallado (drill-down) hasta póliza?",
     options: [
-      { value: "realtime", label: "Tiempo real" },
-      { value: "daily", label: "Diario" },
-      { value: "weekly", label: "Semanal" },
-      { value: "monthly", label: "Mensual" },
-      { value: "quarterly", label: "Trimestral" }
+      { value: "Muy alto", label: "Muy alto" },
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
     ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rep-003",
-    type: "likert",
+    type: "choice",
     category: "reporting",
-    text: "¿Existe un dashboard ejecutivo con indicadores clave (KPIs) del negocio?",
+    text: "¿Qué impacto tendría mejorar la calidad y velocidad del reporteo?",
+    options: [
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
     required: true,
     allowNotMyRole: true
   },
   {
     id: "rep-004",
-    type: "boolean",
-    category: "reporting",
-    text: "¿Los reportes se pueden personalizar y exportar en múltiples formatos (Excel, PDF)?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "rep-005",
-    type: "likert",
-    category: "reporting",
-    text: "¿El sistema permite análisis comparativos (período actual vs anterior, presupuesto vs real)?",
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "rep-006",
     type: "open",
     category: "reporting",
-    text: "¿Qué reportes o análisis financieros generan manualmente que deberían estar disponibles automáticamente?",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
+    allowNotMyRole: true
+  },
+
+  // ========== 10. Prioridad del proyecto ==========
+  {
+    id: "prio-001",
+    type: "choice",
+    category: "priority",
+    text: "¿Qué tan viable considera implementar esta solución en su organización?",
+    options: [
+      { value: "Alta viabilidad", label: "Alta viabilidad (listos para avanzar)" },
+      { value: "Media", label: "Media (requiere análisis adicional)" },
+      { value: "Baja", label: "Baja" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "prio-002",
+    type: "choice",
+    category: "priority",
+    text: "¿En qué horizonte considerarían una implementación?",
+    options: [
+      { value: "Inmediato", label: "Inmediato" },
+      { value: "3-6 meses", label: "3–6 meses" },
+      { value: "6-12 meses", label: "6–12 meses" },
+      { value: "No definido", label: "No definido" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "prio-003",
+    type: "open",
+    category: "priority",
+    text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    required: true,
+    allowNotMyRole: true
+  },
+
+  // ========== 11. Cierre estratégico ==========
+  {
+    id: "clos-001",
+    type: "choice",
+    category: "closing",
+    text: "¿Qué impacto tendría esta solución en su organización?",
+    options: [
+      { value: "Transformacional", label: "Transformacional" },
+      { value: "Alto", label: "Alto" },
+      { value: "Medio", label: "Medio" },
+      { value: "Bajo", label: "Bajo" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "clos-002",
+    type: "open",
+    category: "closing",
+    text: "Comentarios adicionales:",
+    description: "Cualquier otra observación sobre la sesión o requerimientos no cubiertos.",
     required: false,
     allowNotMyRole: true
   }

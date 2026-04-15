@@ -1,6 +1,4 @@
-export type QuestionType = "likert" | "boolean" | "open" | "multiple";
-
-export type LikertValue = 1 | 2 | 3 | 4 | 5;
+export type QuestionType = "choice" | "open";
 
 export interface QuestionOption {
   value: string;
@@ -20,19 +18,22 @@ export interface Question {
 
 export interface Answer {
   questionId: string;
-  value: LikertValue | boolean | string | string[] | null;
+  value: string | null;
   isNotMyRole?: boolean;
-  openText?: string;
 }
 
 export type CategoryId = 
+  | "general"
+  | "e2e"
   | "revenue"
   | "expenses"
   | "reconciliation"
   | "cashflow"
   | "tax"
   | "assets"
-  | "reporting";
+  | "reporting"
+  | "priority"
+  | "closing";
 
 export interface Category {
   id: CategoryId;
@@ -45,12 +46,4 @@ export interface SurveyState {
   answers: Record<string, Answer>;
   currentCategory: CategoryId;
   completedCategories: CategoryId[];
-}
-
-export interface MaturityScore {
-  category: CategoryId;
-  score: number;
-  maxScore: number;
-  percentage: number;
-  level: "Inicial" | "Básico" | "Intermedio" | "Avanzado" | "Optimizado";
 }

@@ -14,7 +14,7 @@ const SurveyContext = createContext<SurveyContextType | undefined>(undefined);
 
 const initialState: SurveyState = {
   answers: {},
-  currentCategory: "revenue",
+  currentCategory: "general",
   completedCategories: []
 };
 
@@ -49,7 +49,7 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   };
 
   const getProgress = () => {
-    const totalCategories = 7;
+    const totalCategories = 11;
     return Math.round((state.completedCategories.length / totalCategories) * 100);
   };
 

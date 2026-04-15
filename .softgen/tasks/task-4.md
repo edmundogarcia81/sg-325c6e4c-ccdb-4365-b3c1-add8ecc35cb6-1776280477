@@ -1,6 +1,6 @@
 ---
 title: Actualizar estructura de encuesta para SAP Business One
-status: in_progress
+status: done
 priority: urgent
 type: feature
 tags: [content, survey]
@@ -13,8 +13,8 @@ position: 4
 El usuario proporcionó una estructura específica de 11 secciones para evaluar SAP Business One para UNICCO. Cada sección tiene preguntas de opción múltiple personalizadas y una pregunta abierta estandarizada al final.
 
 ## Checklist
-- [ ] Actualizar `src/types/survey.ts` con las 11 nuevas categorías (general, e2e, revenue, expenses, reconciliation, cashflow, tax, assets, reporting, priority, closing)
-- [ ] Modificar `QuestionType` para soportar opciones de selección única (`choice`) en lugar de escala Likert
-- [ ] Actualizar `src/lib/surveyData.ts` con todas las preguntas y opciones literales proporcionadas
-- [ ] Ajustar `src/components/QuestionCard.tsx` para renderizar correctamente el tipo `choice`
-- [ ] Actualizar estado inicial en `src/contexts/SurveyContext.tsx`
+- [x] Actualizar `src/types/survey.ts` con las 11 nuevas categorías (general, e2e, revenue, expenses, reconciliation, cashflow, tax, assets, reporting, priority, closing)
+- [x] Modificar `QuestionType` para soportar opciones de selección única (`choice`) en lugar de escala Likert
+- [x] Actualizar `src/lib/surveyData.ts` con todas las preguntas y opciones literales proporcionadas
+- [x] Ajustar `src/components/QuestionCard.tsx` para renderizar correctamente el tipo `choice`
+- [x] Actualizar estado inicial en `src/contexts/SurveyContext.tsx`
