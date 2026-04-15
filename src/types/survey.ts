@@ -7,19 +7,18 @@ export interface QuestionOption {
 
 export interface Question {
   id: string;
-  type: QuestionType;
   category: CategoryId;
   text: string;
-  description?: string;
+  type: QuestionType;
   options?: QuestionOption[];
   required: boolean;
-  allowNotMyRole?: boolean;
+  allowNotMyRole: boolean;
 }
 
 export interface Answer {
   questionId: string;
   value: string | null;
-  isNotMyRole?: boolean;
+  isNotMyRole: boolean;
 }
 
 export type CategoryId = 
@@ -32,14 +31,13 @@ export type CategoryId =
   | "tax"
   | "assets"
   | "reporting"
-  | "priority"
-  | "closing";
+  | "priority";
 
 export interface Category {
   id: CategoryId;
   title: string;
-  description: string;
   icon: string;
+  description: string;
 }
 
 export interface SurveyState {

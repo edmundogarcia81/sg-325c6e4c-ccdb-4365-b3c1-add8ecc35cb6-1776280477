@@ -3,69 +3,63 @@ import type { Category, Question } from "@/types/survey";
 export const categories: Category[] = [
   {
     id: "general",
-    title: "1. Evaluación general",
-    description: "Relevancia y resolución de retos",
-    icon: "Puzzle"
+    title: "Evaluación General",
+    icon: "🧩",
+    description: "Relevancia de la solución propuesta"
   },
   {
     id: "e2e",
-    title: "2. Flujo completo",
-    description: "Visión end-to-end integrada",
-    icon: "RefreshCw"
+    title: "Flujo End-to-End",
+    icon: "🔄",
+    description: "Integración completa del flujo del dinero"
   },
   {
     id: "revenue",
-    title: "3. Gestión de ingresos",
-    description: "Acuerdos globales y contratos",
-    icon: "TrendingUp"
+    title: "Gestión de Ingresos",
+    icon: "💰",
+    description: "Contratos y automatización de ingresos"
   },
   {
     id: "expenses",
-    title: "4. Control de egresos",
-    description: "XML SAT, autorizaciones y pagos",
-    icon: "Receipt"
+    title: "Control de Egresos",
+    icon: "💸",
+    description: "Validación XML y flujos de autorización"
   },
   {
     id: "reconciliation",
-    title: "5. Conciliación bancaria",
-    description: "Integración con bancos y tiempos",
-    icon: "Building2"
+    title: "Conciliación Bancaria",
+    icon: "🏦",
+    description: "Automatización y tiempos de conciliación"
   },
   {
     id: "cashflow",
-    title: "6. Flujo de efectivo",
-    description: "Proyección y liquidez",
-    icon: "Waves"
+    title: "Flujo de Efectivo",
+    icon: "📊",
+    description: "Proyección y liquidez en tiempo real"
   },
   {
     id: "tax",
-    title: "7. Cumplimiento fiscal",
-    description: "CFDI y contabilidad electrónica",
-    icon: "FileText"
+    title: "Cumplimiento Fiscal",
+    icon: "📑",
+    description: "CFDI y validaciones contra SAT"
   },
   {
     id: "assets",
-    title: "8. Activos fijos",
-    description: "Control automatizado y depreciación",
-    icon: "Package"
+    title: "Activos Fijos",
+    icon: "🏢",
+    description: "Control y depreciación automatizada"
   },
   {
     id: "reporting",
-    title: "9. Reporteo financiero",
-    description: "Estados en tiempo real y drill-down",
-    icon: "BarChart3"
+    title: "Reporteo Financiero",
+    icon: "📊",
+    description: "Estados financieros en tiempo real"
   },
   {
     id: "priority",
-    title: "10. Prioridad del proyecto",
-    description: "Viabilidad y horizonte",
-    icon: "Rocket"
-  },
-  {
-    id: "closing",
-    title: "11. Cierre estratégico",
-    description: "Impacto final en la organización",
-    icon: "MessageSquare"
+    title: "Prioridad del Proyecto",
+    icon: "🚀",
+    description: "Viabilidad e implementación"
   }
 ];
 
@@ -468,64 +462,39 @@ export const questions: Question[] = [
     allowNotMyRole: true
   },
 
-  // ========== 10. Prioridad del proyecto ==========
+  // ========== 10. Prioridad del Proyecto ==========
   {
-    id: "prio-001",
-    type: "choice",
+    id: "priority_viability",
     category: "priority",
     text: "¿Qué tan viable considera implementar esta solución en su organización?",
+    type: "choice",
     options: [
-      { value: "Alta viabilidad", label: "Alta viabilidad (listos para avanzar)" },
-      { value: "Media", label: "Media (requiere análisis adicional)" },
-      { value: "Baja", label: "Baja" }
+      { value: "high", label: "Alta viabilidad (listos para avanzar)" },
+      { value: "medium", label: "Media (requiere análisis adicional)" },
+      { value: "low", label: "Baja" }
     ],
     required: true,
     allowNotMyRole: true
   },
   {
-    id: "prio-002",
-    type: "choice",
+    id: "priority_timeline",
     category: "priority",
     text: "¿En qué horizonte considerarían una implementación?",
+    type: "choice",
     options: [
-      { value: "Inmediato", label: "Inmediato" },
-      { value: "3-6 meses", label: "3–6 meses" },
-      { value: "6-12 meses", label: "6–12 meses" },
-      { value: "No definido", label: "No definido" }
+      { value: "immediate", label: "Inmediato" },
+      { value: "3-6", label: "3–6 meses" },
+      { value: "6-12", label: "6–12 meses" },
+      { value: "undefined", label: "No definido" }
     ],
     required: true,
     allowNotMyRole: true
   },
   {
-    id: "prio-003",
-    type: "open",
+    id: "priority_improvements",
     category: "priority",
     text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
-    required: true,
-    allowNotMyRole: true
-  },
-
-  // ========== 11. Cierre estratégico ==========
-  {
-    id: "clos-001",
-    type: "choice",
-    category: "closing",
-    text: "¿Qué impacto tendría esta solución en su organización?",
-    options: [
-      { value: "Transformacional", label: "Transformacional" },
-      { value: "Alto", label: "Alto" },
-      { value: "Medio", label: "Medio" },
-      { value: "Bajo", label: "Bajo" }
-    ],
-    required: true,
-    allowNotMyRole: true
-  },
-  {
-    id: "clos-002",
     type: "open",
-    category: "closing",
-    text: "Comentarios adicionales:",
-    description: "Cualquier otra observación sobre la sesión o requerimientos no cubiertos.",
     required: false,
     allowNotMyRole: true
   }
