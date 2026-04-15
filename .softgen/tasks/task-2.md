@@ -1,6 +1,6 @@
 ---
 title: Implementar preguntas por categoría
-status: todo
+status: done
 priority: high
 type: feature
 tags: [questions, content]
@@ -13,10 +13,10 @@ position: 2
 Definir el conjunto completo de preguntas para cada una de las 7 categorías financieras. Mezclar preguntas cerradas (basadas en funcionalidades ERP estándar) con preguntas abiertas para identificar gaps.
 
 ## Checklist
-- [ ] Definir preguntas de Gestión de Ingresos: control de contratos, cálculo de intereses, comisiones
-- [ ] Definir preguntas de Control de Egresos: validación XML SAT, flujo de aprobación de pagos
-- [ ] Definir preguntas de Conciliación Bancaria: automatización, frecuencia, partidas en tránsito
-- [ ] Definir preguntas de Flujo de Efectivo: proyecciones, análisis de variaciones, alertas
-- [ ] Definir preguntas de Cumplimiento Fiscal: CFDI 4.0, reportes SAT, timbrado
-- [ ] Definir preguntas de Activos Fijos: depreciación, inventario, valuación
-- [ ] Definir preguntas de Reporteo Financiero: estados financieros, dashboards, periodicidad
+- [x] Definir preguntas de Gestión de Ingresos: control de contratos, cálculo de intereses, comisiones
+- [x] Definir preguntas de Control de Egresos: validación XML SAT, flujo de aprobación de pagos
+- [x] Definir preguntas de Conciliación Bancaria: automatización, frecuencia, partidas en tránsito
+- [x] Definir preguntas de Flujo de Efectivo: proyecciones, análisis de variaciones, alertas
+- [x] Definir preguntas de Cumplimiento Fiscal: CFDI 4.0, reportes SAT, timbrado
+- [x] Definir preguntas de Activos Fijos: depreciación, inventario, valuación
+- [x] Definir preguntas de Reporteo Financiero: estados financieros, dashboards, periodicidad
