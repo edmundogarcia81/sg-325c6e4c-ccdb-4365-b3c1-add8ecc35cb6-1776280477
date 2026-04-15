@@ -1,6 +1,7 @@
 import { Check } from "lucide-react";
 import { categories } from "@/lib/surveyData";
 import type { CategoryId } from "@/types/survey";
+import { cn } from "@/lib/utils";
 
 interface SurveyProgressProps {
   currentCategory: CategoryId;
