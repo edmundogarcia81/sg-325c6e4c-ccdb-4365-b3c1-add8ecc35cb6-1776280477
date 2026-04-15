@@ -1,32 +1,33 @@
 import { Check } from "lucide-react";
 import { categories } from "@/lib/surveyData";
 import type { CategoryId } from "@/types/survey";
-import { cn } from "@/lib/utils";
 
 interface SurveyProgressProps {
   currentCategory: CategoryId;
   completedCategories: CategoryId[];
-  onCategorySelect: (category: CategoryId) => void;
+  progress: number;
+  onSelectCategory?: (categoryId: CategoryId) => void;
 }
 
 export function SurveyProgress({ 
   currentCategory, 
-  completedCategories,
-  onCategorySelect 
+  completedCategories, 
+  progress,
+  onSelectCategory
 }: SurveyProgressProps) {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="font-heading font-semibold text-foreground">Progreso de la Encuesta</h2>
-        <span className="text-sm font-medium text-muted-foreground">
+    <div className="bg-card rounded-lg border border-border p-6 shadow-sm h-fit sticky top-6">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-heading font-semibold text-foreground">
+          Progreso de la Encuesta
+        </h3>
+        <span className="text-sm text-muted-foreground">
           {completedCategories.length} / {categories.length} secciones
         </span>
       </div>
-      
-      <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-border" />
-        
-        <div className="space-y-3">
+
+      <div className="space-y-1 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
+        <div className="relative z-10 flex flex-col gap-4">
           {categories.map((category, index) => {
             const isCompleted = completedCategories.includes(category.id);
             const isCurrent = currentCategory === category.id;
@@ -34,12 +35,15 @@ export function SurveyProgress({
             return (
               <button
                 key={category.id}
-                onClick={() => onCategorySelect(category.id)}
-                className={cn(
-                  "relative flex items-start gap-3 w-full text-left p-3 rounded-lg transition-all",
-                  "hover:bg-muted/50",
-                  isCurrent && "bg-primary/5 ring-1 ring-primary/20"
-                )}
+                onClick={() => onSelectCategory?.(category.id)}
+                disabled={!isCompleted && !isCurrent}
+                className={`flex items-start gap-4 p-3 rounded-lg transition-colors text-left ${
+                  isCurrent 
+                    ? "bg-primary/5 border border-primary/20" 
+                    : isCompleted && onSelectCategory
+                      ? "hover:bg-muted cursor-pointer"
+                      : "cursor-default"
+                }`}
               >
                 <div
                   className={cn(
