@@ -483,7 +483,7 @@ export default function AdminPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-heading font-bold text-foreground">Panel de Administración</h1>
-                <p className="text-sm text-muted-foreground">Gestión de encuestas UNICCO</p>
+                <p className="text-sm text-muted-foreground">Gestión de encuestas</p>
               </div>
             </div>
             <Button variant="outline" onClick={handleLogout} size="sm">
