@@ -60,6 +60,12 @@ export const categories: Category[] = [
     title: "Prioridad del Proyecto",
     icon: "🚀",
     description: "Viabilidad e implementación"
+  },
+  {
+    id: "closing",
+    title: "Cierre Estratégico",
+    icon: "💬",
+    description: "Impacto y comentarios finales"
   }
 ];
 
@@ -494,6 +500,30 @@ export const questions: Question[] = [
     id: "priority_improvements",
     category: "priority",
     text: "¿Qué áreas de mejora en este proceso considera que tendría el sistema para UNICCO?",
+    type: "open",
+    required: false,
+    allowNotMyRole: true
+  },
+
+  // ========== 11. Cierre Estratégico ==========
+  {
+    id: "closing_impact",
+    category: "closing",
+    text: "¿Qué impacto tendría esta solución en su organización?",
+    type: "choice",
+    options: [
+      { value: "transformational", label: "Transformacional" },
+      { value: "high", label: "Alto" },
+      { value: "medium", label: "Medio" },
+      { value: "low", label: "Bajo" }
+    ],
+    required: true,
+    allowNotMyRole: true
+  },
+  {
+    id: "closing_comments",
+    category: "closing",
+    text: "Comentarios adicionales:",
     type: "open",
     required: false,
     allowNotMyRole: true

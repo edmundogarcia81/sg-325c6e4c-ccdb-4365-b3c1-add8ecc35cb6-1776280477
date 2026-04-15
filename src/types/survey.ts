@@ -32,7 +32,8 @@ export type CategoryId =
   | "tax"
   | "assets"
   | "reporting"
-  | "priority";
+  | "priority"
+  | "closing";
 
 export interface Category {
   id: CategoryId;

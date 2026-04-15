@@ -76,7 +76,7 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   };
 
   const getProgress = () => {
-    const totalCategories = 10;
+    const totalCategories = 11;
     return Math.round((state.completedCategories.length / totalCategories) * 100);
   };
 
