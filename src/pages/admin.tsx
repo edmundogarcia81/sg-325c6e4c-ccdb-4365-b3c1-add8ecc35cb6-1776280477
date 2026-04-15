@@ -13,6 +13,12 @@ import {
   Clock,
   BarChart3,
   Trash2,
+  Settings,
+  Plus,
+  Edit,
+  GripVertical,
+  Save,
+  X,
   FileText,
   PieChart
 } from "lucide-react";
@@ -22,9 +28,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table } from "@/components/ui/table";
 import { surveyService } from "@/services/surveyService";
-import { categories, questions } from "@/lib/surveyData";
+import { surveyConfigService, type Category, type Question } from "@/services/surveyConfigService";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   AlertDialog,
@@ -37,6 +43,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Survey = Tables<"surveys"> & {
   survey_responses: Tables<"survey_responses">[];
@@ -71,6 +94,21 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
+  // Survey config management states
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [editCategoryDialog, setEditCategoryDialog] = useState(false);
+  const [editQuestionDialog, setEditQuestionDialog] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ title: "", description: "" });
+  const [questionForm, setQuestionForm] = useState({ 
+    text: "", 
+    type: "likert" as "likert" | "yesno" | "open",
+    options: [""] 
+  });
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
+
   useEffect(() => {
     const auth = sessionStorage.getItem("adminAuth");
     if (auth === "true") {
@@ -84,14 +122,14 @@ export default function AdminPage() {
   const loadData = async () => {
     try {
       setIsLoading(true);
-      const [surveysData, statsData] = await Promise.all([
+      const [surveysData, statsData, categoriesData] = await Promise.all([
         surveyService.getAllSurveys(),
-        surveyService.getSurveyStats()
+        surveyService.getSurveyStats(),
+        surveyConfigService.getAllCategories()
       ]);
-      
       setSurveys(surveysData);
       setStats(statsData);
-      calculateCategoryStats(surveysData);
+      setCategories(categoriesData);
     } catch (error) {
       console.error("Error loading data:", error);
     } finally {
@@ -221,6 +259,139 @@ export default function AdminPage() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  // Category management functions
+  const loadQuestions = async (categoryId: string) => {
+    try {
+      const data = await surveyConfigService.getQuestionsByCategory(categoryId);
+      setQuestions(data);
+    } catch (error) {
+      console.error("Error loading questions:", error);
+    }
+  };
+
+  const handleEditCategory = (category?: Category) => {
+    if (category) {
+      setEditingCategory(category);
+      setCategoryForm({ title: category.title, description: category.description });
+    } else {
+      setEditingCategory(null);
+      setCategoryForm({ title: "", description: "" });
+    }
+    setEditCategoryDialog(true);
+  };
+
+  const handleSaveCategory = async () => {
+    try {
+      if (editingCategory) {
+        await surveyConfigService.updateCategory(editingCategory.id, categoryForm);
+      } else {
+        await surveyConfigService.createCategory({
+          ...categoryForm,
+          position: categories.length + 1
+        });
+      }
+      await loadData();
+      setEditCategoryDialog(false);
+      setCategoryForm({ title: "", description: "" });
+      setEditingCategory(null);
+    } catch (error) {
+      console.error("Error saving category:", error);
+      alert("Error al guardar la categoría");
+    }
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    if (!confirm("¿Eliminar esta categoría y todas sus preguntas?")) return;
+    try {
+      await surveyConfigService.deleteCategory(categoryId);
+      await loadData();
+      if (selectedCategory?.id === categoryId) {
+        setSelectedCategory(null);
+        setQuestions([]);
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert("Error al eliminar la categoría");
+    }
+  };
+
+  // Question management functions
+  const handleEditQuestion = (question?: Question) => {
+    if (question) {
+      setEditingQuestion(question);
+      const opts = question.options ? 
+        (typeof question.options === "string" ? JSON.parse(question.options) : question.options) 
+        : [""];
+      setQuestionForm({ 
+        text: question.text, 
+        type: question.type,
+        options: Array.isArray(opts) ? opts : [""]
+      });
+    } else {
+      setEditingQuestion(null);
+      setQuestionForm({ text: "", type: "likert", options: [""] });
+    }
+    setEditQuestionDialog(true);
+  };
+
+  const handleSaveQuestion = async () => {
+    if (!selectedCategory) return;
+    try {
+      const questionData = {
+        text: questionForm.text,
+        type: questionForm.type,
+        options: questionForm.type === "likert" ? questionForm.options.filter(o => o.trim()) : undefined,
+        category_id: selectedCategory.id,
+        position: editingQuestion ? editingQuestion.position : questions.length + 1
+      };
+
+      if (editingQuestion) {
+        await surveyConfigService.updateQuestion(editingQuestion.id, questionData);
+      } else {
+        await surveyConfigService.createQuestion(questionData);
+      }
+      
+      await loadQuestions(selectedCategory.id);
+      setEditQuestionDialog(false);
+      setQuestionForm({ text: "", type: "likert", options: [""] });
+      setEditingQuestion(null);
+    } catch (error) {
+      console.error("Error saving question:", error);
+      alert("Error al guardar la pregunta");
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!confirm("¿Eliminar esta pregunta?")) return;
+    try {
+      await surveyConfigService.deleteQuestion(questionId);
+      if (selectedCategory) {
+        await loadQuestions(selectedCategory.id);
+      }
+    } catch (error) {
+      console.error("Error deleting question:", error);
+      alert("Error al eliminar la pregunta");
+    }
+  };
+
+  const addOption = () => {
+    setQuestionForm(prev => ({ ...prev, options: [...prev.options, ""] }));
+  };
+
+  const updateOption = (index: number, value: string) => {
+    setQuestionForm(prev => ({
+      ...prev,
+      options: prev.options.map((opt, i) => i === index ? value : opt)
+    }));
+  };
+
+  const removeOption = (index: number) => {
+    setQuestionForm(prev => ({
+      ...prev,
+      options: prev.options.filter((_, i) => i !== index)
+    }));
   };
 
   const toggleSelectAll = () => {
@@ -394,15 +565,19 @@ export default function AdminPage() {
             </Card>
           </div>
 
-          <Tabs defaultValue="surveys" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="surveys" className="flex items-center gap-2">
+          <Tabs defaultValue="dashboard" className="space-y-6">
+            <TabsList className="bg-muted p-1 rounded-lg">
+              <TabsTrigger value="dashboard" className="gap-2">
+                <BarChart3 className="w-4 h-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="surveys" className="gap-2">
                 <Users className="w-4 h-4" />
                 Encuestas
               </TabsTrigger>
-              <TabsTrigger value="stats" className="flex items-center gap-2">
-                <BarChart3 className="w-4 h-4" />
-                Estadísticas por Categoría
+              <TabsTrigger value="stats" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Estadísticas
               </TabsTrigger>
             </TabsList>
 
@@ -657,34 +832,299 @@ export default function AdminPage() {
                 })}
               </div>
             </TabsContent>
-          </Tabs>
-        </div>
 
-        {/* Delete Confirmation Dialog */}
-        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-              <AlertDialogDescription>
-                {surveyToDelete ? (
-                  "Esta acción eliminará permanentemente esta encuesta y todas sus respuestas. Esta acción no se puede deshacer."
-                ) : (
-                  `Esta acción eliminará permanentemente ${selectedSurveys.length} encuesta(s) y todas sus respuestas. Esta acción no se puede deshacer.`
+            {/* Survey Configuration Tab */}
+            <TabsContent value="config" className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                {/* Categories Section */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Categorías</CardTitle>
+                      <CardDescription>Gestiona las categorías de la encuesta</CardDescription>
+                    </div>
+                    <Button onClick={() => handleEditCategory()} size="sm" className="gap-2">
+                      <Plus className="w-4 h-4" />
+                      Nueva
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {categories.map((category) => (
+                        <div
+                          key={category.id}
+                          className={`p-4 rounded-lg border-2 transition-colors cursor-pointer ${
+                            selectedCategory?.id === category.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30"
+                          }`}
+                          onClick={() => {
+                            setSelectedCategory(category);
+                            loadQuestions(category.id);
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                <Badge variant="secondary" className="text-xs">
+                                  {category.description}
+                                </Badge>
+                              </div>
+                              <p className="text-sm">{category.title}</p>
+                            </div>
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCategory(category);
+                                }}
+                              >
+                                <Edit className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteCategory(category.id);
+                                }}
+                              >
+                                <Trash2 className="w-3 h-3 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Questions Section */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Preguntas</CardTitle>
+                      <CardDescription>
+                        {selectedCategory ? `Preguntas de: ${selectedCategory.title}` : "Selecciona una categoría"}
+                      </CardDescription>
+                    </div>
+                    {selectedCategory && (
+                      <Button onClick={() => handleEditQuestion()} size="sm" className="gap-2">
+                        <Plus className="w-4 h-4" />
+                        Nueva
+                      </Button>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {selectedCategory ? (
+                      <div className="space-y-2">
+                        {questions.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-8">
+                            No hay preguntas. Agrega una nueva pregunta.
+                          </p>
+                        ) : (
+                          questions.map((question) => (
+                            <div
+                              key={question.id}
+                              className="p-4 rounded-lg border-2 border-border hover:border-primary/30 transition-colors"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <GripVertical className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                                    <Badge variant="secondary" className="text-xs">
+                                      {question.type === "likert" ? "Escala" : question.type === "yesno" ? "Sí/No" : "Abierta"}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm">{question.text}</p>
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditQuestion(question)}
+                                  >
+                                    <Edit className="w-3 h-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteQuestion(question.id)}
+                                  >
+                                    <Trash2 className="w-3 h-3 text-destructive" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground text-center py-8">
+                        Selecciona una categoría para ver sus preguntas
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {surveyToDelete ? (
+                    "Esta acción eliminará permanentemente esta encuesta y todas sus respuestas. Esta acción no se puede deshacer."
+                  ) : (
+                    `Esta acción eliminará permanentemente ${selectedSurveys.length} encuesta(s) y todas sus respuestas. Esta acción no se puede deshacer.`
+                  )}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={confirmDelete}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? "Eliminando..." : "Eliminar"}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          {/* Category Edit Dialog */}
+          <Dialog open={editCategoryDialog} onOpenChange={setEditCategoryDialog}>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>{editingCategory ? "Editar Categoría" : "Nueva Categoría"}</DialogTitle>
+                <DialogDescription>
+                  {editingCategory ? "Modifica los datos de la categoría" : "Crea una nueva categoría para la encuesta"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cat-title">Título</Label>
+                  <Input
+                    id="cat-title"
+                    value={categoryForm.title}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Ej: Gestión de Ingresos"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="cat-desc">Descripción</Label>
+                  <Textarea
+                    id="cat-desc"
+                    value={categoryForm.description}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Descripción breve de la categoría"
+                    rows={3}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditCategoryDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveCategory} disabled={!categoryForm.title.trim()}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Question Edit Dialog */}
+          <Dialog open={editQuestionDialog} onOpenChange={setEditQuestionDialog}>
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>{editingQuestion ? "Editar Pregunta" : "Nueva Pregunta"}</DialogTitle>
+                <DialogDescription>
+                  {editingQuestion ? "Modifica los datos de la pregunta" : "Crea una nueva pregunta para esta categoría"}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="q-type">Tipo de Pregunta</Label>
+                  <Select
+                    value={questionForm.type}
+                    onValueChange={(value: "likert" | "yesno" | "open") => 
+                      setQuestionForm(prev => ({ ...prev, type: value }))
+                    }
+                  >
+                    <SelectTrigger id="q-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="likert">Escala Likert</SelectItem>
+                      <SelectItem value="yesno">Sí/No</SelectItem>
+                      <SelectItem value="open">Abierta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="q-text">Texto de la Pregunta</Label>
+                  <Textarea
+                    id="q-text"
+                    value={questionForm.text}
+                    onChange={(e) => setQuestionForm(prev => ({ ...prev, text: e.target.value }))}
+                    placeholder="Escribe la pregunta..."
+                    rows={3}
+                  />
+                </div>
+
+                {questionForm.type === "likert" && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Opciones de Respuesta</Label>
+                      <Button variant="outline" size="sm" onClick={addOption} className="gap-2">
+                        <Plus className="w-3 h-3" />
+                        Agregar
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {questionForm.options.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            value={option}
+                            onChange={(e) => updateOption(index, e.target.value)}
+                            placeholder={`Opción ${index + 1}`}
+                          />
+                          {questionForm.options.length > 1 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeOption(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={confirmDelete}
-                disabled={isDeleting}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                {isDeleting ? "Eliminando..." : "Eliminar"}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setEditQuestionDialog(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveQuestion} disabled={!questionForm.text.trim()}>
+                  <Save className="w-4 h-4 mr-2" />
+                  Guardar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </>
   );
