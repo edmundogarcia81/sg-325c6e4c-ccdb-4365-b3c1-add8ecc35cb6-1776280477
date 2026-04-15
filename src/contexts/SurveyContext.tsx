@@ -83,19 +83,17 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   const saveToDatabaseAndSendEmail = async () => {
     const surveyId = localStorage.getItem("currentSurveyId");
     const email = localStorage.getItem("surveyEmail");
+    const name = localStorage.getItem("surveyName");
 
-    if (!surveyId || !email) {
+    if (!surveyId || !email || !name) {
       throw new Error("Missing survey information");
     }
 
     // Marcar encuesta como completada
-    await surveyService.completeSurvey(surveyId);
-
-    // Obtener survey con token para el email
-    const survey = await surveyService.getSurveyByToken("");
+    const survey = await surveyService.completeSurvey(surveyId);
     
     // Enviar email con resumen
-    await surveyService.sendSurveyEmail(email, survey.unique_link_token, state.answers);
+    await surveyService.sendSurveyEmail(email, name, survey.unique_link_token, state.answers);
   };
 
   return (

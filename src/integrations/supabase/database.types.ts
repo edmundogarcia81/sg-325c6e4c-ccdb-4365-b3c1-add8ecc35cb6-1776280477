@@ -83,6 +83,7 @@ export type Database = {
           created_at: string | null
           email: string
           id: string
+          name: string
           unique_link_token: string
         }
         Insert: {
@@ -90,6 +91,7 @@ export type Database = {
           created_at?: string | null
           email: string
           id?: string
+          name?: string
           unique_link_token?: string
         }
         Update: {
@@ -97,6 +99,7 @@ export type Database = {
           created_at?: string | null
           email?: string
           id?: string
+          name?: string
           unique_link_token?: string
         }
         Relationships: []

@@ -3,6 +3,7 @@ import type { Tables } from "@/integrations/supabase/types";
 
 export interface CreateSurveyParams {
   email: string;
+  name: string;
 }
 
 export interface SaveResponseParams {
@@ -16,7 +17,10 @@ export const surveyService = {
   async createSurvey(params: CreateSurveyParams) {
     const { data, error } = await supabase
       .from("surveys")
-      .insert({ email: params.email })
+      .insert({ 
+        email: params.email,
+        name: params.name 
+      })
       .select("id, unique_link_token")
       .single();
 
@@ -63,9 +67,9 @@ export const surveyService = {
     return data;
   },
 
-  async sendSurveyEmail(email: string, token: string, responses: any) {
+  async sendSurveyEmail(email: string, name: string, token: string, responses: any) {
     const { data, error } = await supabase.functions.invoke("send-survey-email", {
-      body: { email, token, responses }
+      body: { email, name, token, responses }
     });
 
     if (error) throw error;
