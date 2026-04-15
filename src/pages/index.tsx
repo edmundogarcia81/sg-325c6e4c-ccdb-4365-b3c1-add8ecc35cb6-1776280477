@@ -22,33 +22,33 @@ export default function Home() {
     // Verificar que tengamos email y surveyId
     const surveyId = localStorage.getItem("currentSurveyId");
     const email = localStorage.getItem("surveyEmail");
-    
+
     if (!surveyId || !email) {
       router.push("/start");
     }
   }, [router]);
 
   const currentCategoryQuestions = questions.filter(
-    q => q.category === state.currentCategory
+    (q) => q.category === state.currentCategory
   );
 
-  const currentCategoryIndex = categories.findIndex(c => c.id === state.currentCategory);
+  const currentCategoryIndex = categories.findIndex((c) => c.id === state.currentCategory);
   const isLastCategory = currentCategoryIndex === categories.length - 1;
 
   const getCurrentCategoryAnswers = () => {
-    return currentCategoryQuestions.filter(q => {
+    return currentCategoryQuestions.filter((q) => {
       const answer = state.answers[q.id];
       return answer && (answer.value !== null || answer.isNotMyRole);
     }).length;
   };
 
   const areRequiredQuestionsAnswered = () => {
-    return currentCategoryQuestions
-      .filter(q => q.required)
-      .every(q => {
-        const answer = state.answers[q.id];
-        return answer && (answer.value !== null || answer.isNotMyRole);
-      });
+    return currentCategoryQuestions.
+    filter((q) => q.required).
+    every((q) => {
+      const answer = state.answers[q.id];
+      return answer && (answer.value !== null || answer.isNotMyRole);
+    });
   };
 
   const handleNext = async () => {
@@ -69,7 +69,7 @@ export default function Home() {
       setIsSubmitting(true);
       try {
         await saveToDatabaseAndSendEmail();
-        
+
         toast({
           title: "¡Encuesta completada!",
           description: "Hemos enviado un resumen a su correo electrónico con una liga para ver las estadísticas."
@@ -160,8 +160,8 @@ export default function Home() {
                     <FileText className="w-6 h-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-heading font-semibold text-foreground mb-1">
-                      {currentCategory?.title}
+                    <h2 className="text-xl font-heading font-semibold text-foreground mb-1">2. Flujo de ingresos y egresos
+
                     </h2>
                     <p className="text-sm text-muted-foreground mb-4">
                       {currentCategory?.description}
@@ -219,34 +219,34 @@ export default function Home() {
                   Anterior
                 </Button>
 
-                {isLastCategory ? (
-                  <Button
-                    onClick={handleNext}
-                    className="bg-accent hover:bg-accent/90"
-                    disabled={isSubmitting}>
-                    {isSubmitting ? (
-                      <>
+                {isLastCategory ?
+                <Button
+                  onClick={handleNext}
+                  className="bg-accent hover:bg-accent/90"
+                  disabled={isSubmitting}>
+                    {isSubmitting ?
+                  <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         Enviando...
-                      </>
-                    ) : (
-                      <>
+                      </> :
+
+                  <>
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         Finalizar Encuesta
                       </>
-                    )}
-                  </Button>
-                ) : (
-                  <Button onClick={handleNext} disabled={isSubmitting}>
+                  }
+                  </Button> :
+
+                <Button onClick={handleNext} disabled={isSubmitting}>
                     Siguiente
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
-                )}
+                }
               </div>
             </main>
           </div>
         </div>
       </div>
-    </>
-  );
+    </>);
+
 }
