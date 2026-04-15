@@ -19,20 +19,20 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Verificar que tengamos email y surveyId
     const surveyId = localStorage.getItem("currentSurveyId");
     const email = localStorage.getItem("surveyEmail");
-
+    
     if (!surveyId || !email) {
       router.push("/start");
     }
   }, [router]);
 
   const currentCategoryQuestions = questions.filter(
-    (q) => q.category === state.currentCategory
+    q => q.category === state.currentCategory
   );
 
-  const currentCategoryIndex = categories.findIndex((c) => c.id === state.currentCategory);
+  const currentCategory = categories.find(c => c.id === state.currentCategory);
+  const currentCategoryIndex = categories.findIndex(c => c.id === state.currentCategory);
   const isLastCategory = currentCategoryIndex === categories.length - 1;
 
   const getCurrentCategoryAnswers = () => {
@@ -107,141 +107,123 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const currentCategory = categories.find((c) => c.id === state.currentCategory);
-  const answeredCount = getCurrentCategoryAnswers();
-  const totalCount = currentCategoryQuestions.length;
-  const categoryProgress = totalCount > 0 ? answeredCount / totalCount * 100 : 0;
-
   return (
     <>
       <SEO
-        title="Encuesta de Diagnóstico ERP - Unión de Crédito"
-        description="Evalúe la madurez operativa y financiera de su institución en 7 áreas clave" />
-      
-      
+        title="Diagnóstico de Madurez ERP - UNICCO"
+        description="Evaluación de control financiero para SAP Business One"
+      />
       <div className="min-h-screen bg-background">
-        <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
-          <div className="container py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-heading font-bold text-foreground">
-                  Diagnóstico de Madurez ERP
-                </h1>
-                <p className="text-sm text-muted-foreground mt-1">Evaluación de control financiero para UNICCO
-
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-sm font-medium text-muted-foreground">
-                  Progreso global
-                </div>
-                <div className="text-2xl font-heading font-bold text-primary">
-                  {getProgress()}%
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-
         <div className="container py-8">
-          <div className="grid lg:grid-cols-[320px_1fr] gap-8">
-            <aside className="lg:sticky lg:top-24 h-fit">
-              <SurveyProgress
-                currentCategory={state.currentCategory}
-                completedCategories={state.completedCategories}
-                onCategorySelect={handleCategorySelect} />
-              
-            </aside>
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
+              Diagnóstico de Madurez ERP
+            </h1>
+            <p className="text-muted-foreground">
+              Evaluación de control financiero para UNICCO
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-[380px_1fr] gap-8">
+            <SurveyProgress
+              categories={categories}
+              currentCategory={state.currentCategory}
+              completedCategories={state.completedCategories}
+              onSelectCategory={handleCategorySelect}
+              progress={getProgress()}
+            />
 
             <main>
-              <div className="bg-card rounded-lg border border-border p-6 mb-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                    <FileText className="w-6 h-6 text-primary" />
-                  </div>
+              <div className="bg-card rounded-lg border border-border p-6 md:p-8 shadow-sm">
+                <div className="flex items-start gap-4 mb-6 pb-6 border-b border-border">
+                  <div className="text-4xl">{currentCategory?.icon}</div>
                   <div className="flex-1">
-                    <h2 className="text-xl font-heading font-semibold text-foreground mb-1">2. Flujo de ingresos y egresos
-
+                    <h2 className="text-2xl font-heading font-semibold text-foreground mb-2">
+                      {currentCategoryIndex + 1}. {currentCategory?.title}
                     </h2>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <p className="text-muted-foreground">
                       {currentCategory?.description}
                     </p>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Preguntas respondidas: {answeredCount} / {totalCount}
-                        </span>
-                        <span className="font-medium text-foreground">
-                          {Math.round(categoryProgress)}%
-                        </span>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-muted-foreground">
+                      Preguntas respondidas: {getCurrentCategoryAnswers()} / {currentCategoryQuestions.length}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground">
+                      {Math.round((getCurrentCategoryAnswers() / currentCategoryQuestions.length) * 100)}%
+                    </span>
+                  </div>
+                  <Progress 
+                    value={(getCurrentCategoryAnswers() / currentCategoryQuestions.length) * 100} 
+                    className="h-2"
+                  />
+                </div>
+
+                {showValidation && !areRequiredQuestionsAnswered() &&
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                      <div>
+                        <h3 className="font-medium text-destructive mb-1">
+                          Preguntas requeridas sin responder
+                        </h3>
+                        <p className="text-sm text-destructive/80">
+                          Por favor responda todas las preguntas marcadas con (*) o seleccione "No es mi rol" si no aplica.
+                        </p>
                       </div>
-                      <Progress value={categoryProgress} className="h-2" />
                     </div>
                   </div>
-                </div>
-              </div>
-
-              {showValidation && !areRequiredQuestionsAnswered() &&
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
-                    <div>
-                      <h3 className="font-medium text-destructive mb-1">
-                        Preguntas requeridas sin responder
-                      </h3>
-                      <p className="text-sm text-destructive/80">
-                        Por favor responda todas las preguntas marcadas con (*) o seleccione "No es mi rol" si no aplica.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              }
-
-              <div className="space-y-4 mb-8">
-                {currentCategoryQuestions.map((question, index) =>
-                <QuestionCard
-                  key={question.id}
-                  question={question}
-                  answer={state.answers[question.id]}
-                  onAnswer={(answer) => setAnswer(question.id, answer)}
-                  questionNumber={index + 1} />
-
-                )}
-              </div>
-
-              <div className="flex items-center justify-between pt-6 border-t border-border">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={currentCategoryIndex === 0 || isSubmitting}>
-                  
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Anterior
-                </Button>
-
-                {isLastCategory ?
-                <Button
-                  onClick={handleNext}
-                  className="bg-accent hover:bg-accent/90"
-                  disabled={isSubmitting}>
-                    {isSubmitting ?
-                  <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Enviando...
-                      </> :
-
-                  <>
-                        <CheckCircle2 className="w-4 h-4 mr-2" />
-                        Finalizar Encuesta
-                      </>
-                  }
-                  </Button> :
-
-                <Button onClick={handleNext} disabled={isSubmitting}>
-                    Siguiente
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
                 }
+
+                <div className="space-y-4 mb-8">
+                  {currentCategoryQuestions.map((question, index) =>
+                  <QuestionCard
+                    key={question.id}
+                    question={question}
+                    answer={state.answers[question.id]}
+                    onAnswer={(answer) => setAnswer(question.id, answer)}
+                    questionNumber={index + 1} />
+
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-6 border-t border-border">
+                  <Button
+                    variant="outline"
+                    onClick={handlePrevious}
+                    disabled={currentCategoryIndex === 0 || isSubmitting}>
+                    
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Anterior
+                  </Button>
+
+                  {isLastCategory ?
+                  <Button
+                    onClick={handleNext}
+                    className="bg-accent hover:bg-accent/90"
+                    disabled={isSubmitting}>
+                      {isSubmitting ?
+                    <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Enviando...
+                        </> :
+
+                    <>
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Finalizar Encuesta
+                        </>
+                    }
+                    </Button> :
+
+                  <Button onClick={handleNext} disabled={isSubmitting}>
+                      Siguiente
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  }
+                </div>
               </div>
             </main>
           </div>
