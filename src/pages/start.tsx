@@ -8,6 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { surveyService } from "@/services/surveyService";
 import { useToast } from "@/hooks/use-toast";
+import { CardDescription } from "@/components/ui/card";
+import { useSurvey } from "@/contexts/SurveyContext";
+import Image from "next/image";
 
 export default function StartSurvey() {
   const router = useRouter();
@@ -93,13 +96,18 @@ export default function StartSurvey() {
       
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
+          {/* Logo B11 */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-heading font-bold text-foreground mb-3">Encuesta SAP B1
-
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Evaluación SAP Business One para UNICCO
-            </p>
+            <div className="inline-block bg-white rounded-2xl shadow-md p-6 mb-6">
+              <Image 
+                src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                alt="B11 Logo"
+                width={160}
+                height={60}
+                priority
+                className="mx-auto"
+              />
+            </div>
           </div>
 
           <Card>

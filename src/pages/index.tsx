@@ -8,6 +8,7 @@ import { QuestionCard } from "@/components/QuestionCard";
 import { useSurvey } from "@/contexts/SurveyContext";
 import { useToast } from "@/hooks/use-toast";
 import { categories, questions } from "@/lib/surveyData";
+import Image from "next/image";
 
 export default function Home() {
   const router = useRouter();

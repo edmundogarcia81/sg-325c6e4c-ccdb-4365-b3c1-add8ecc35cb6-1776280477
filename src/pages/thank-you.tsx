@@ -3,7 +3,9 @@ import { useRouter } from "next/router";
 import { CheckCircle2, Mail, BarChart3, ArrowRight } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useSurvey } from "@/contexts/SurveyContext";
+import Image from "next/image";
 
 export default function ThankYou() {
   const router = useRouter();
@@ -22,25 +24,35 @@ export default function ThankYou() {
   return (
     <>
       <SEO
-        title="¡Gracias por completar la encuesta!"
-        description="Su diagnóstico de madurez ERP ha sido enviado exitosamente"
+        title="¡Gracias! - Encuesta Completada"
+        description="Tu encuesta ha sido enviada exitosamente"
       />
       
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
+          {/* Logo B11 */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/10 mb-6">
-              <CheckCircle2 className="w-10 h-10 text-accent" />
+            <div className="inline-block bg-white rounded-2xl shadow-md p-6 mb-6">
+              <Image 
+                src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                alt="B11 Logo"
+                width={160}
+                height={60}
+                priority
+                className="mx-auto"
+              />
             </div>
-            <h1 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-              ¡Encuesta completada!
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              Gracias por completar el diagnóstico de madurez ERP
-            </p>
           </div>
 
-          <Card>
+          <Card className="shadow-2xl text-center">
+            <CardHeader>
+              <CardTitle className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
+                ¡Encuesta completada!
+              </CardTitle>
+              <CardDescription className="text-lg text-muted-foreground">
+                Gracias por completar el diagnóstico de madurez ERP
+              </CardDescription>
+            </CardHeader>
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-4">
                 <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg">

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 import { 
   Lock, 
   LogOut, 
@@ -258,9 +259,20 @@ export default function AdminPage() {
       <div className="min-h-screen bg-background">
         <div className="border-b border-border bg-card">
           <div className="container py-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-heading font-bold text-foreground">Panel de Administración</h1>
-              <p className="text-sm text-muted-foreground">Gestión de encuestas UNICCO</p>
+            <div className="flex items-center gap-4">
+              <div className="bg-white rounded-lg shadow-sm p-2">
+                <Image 
+                  src="https://www.b11.mx/wp-content/uploads/2023/03/logo-b11-color.svg"
+                  alt="B11 Logo"
+                  width={100}
+                  height={38}
+                  priority
+                />
+              </div>
+              <div>
+                <h1 className="text-2xl font-heading font-bold text-foreground">Panel de Administración</h1>
+                <p className="text-sm text-muted-foreground">Gestión de encuestas UNICCO</p>
+              </div>
             </div>
             <Button variant="outline" onClick={handleLogout} size="sm">
               <LogOut className="w-4 h-4 mr-2" />
