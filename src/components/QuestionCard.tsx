@@ -85,16 +85,16 @@ export function QuestionCard({ question, answer, onAnswer, questionNumber }: Que
                 {questionNumber}.
               </span>
               <div className="flex-1">
-                <h3 className="font-medium text-foreground mb-1">¿Puede registrar las comisiones o intereses en la facturacion?*
+                <h3 className="font-medium text-foreground mb-1">¿Algun otro proceso que no se incluya en la parte de ingresos?*
 
 
 
 
                 </h3>
                 {question.description &&
-                <p className="text-sm text-muted-foreground">
-                    {question.description}
-                  </p>
+                <p className="text-sm text-muted-foreground">Describa áreas de oportunidad que no haya visto en la presentación
+
+                </p>
                 }
               </div>
             </div>
