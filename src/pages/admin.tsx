@@ -6,12 +6,14 @@ import {
   LogOut, 
   Users, 
   CheckCircle2, 
-  TrendingUp,
-  FileText,
-  Download,
-  Search,
+  TrendingUp, 
+  Search, 
+  Download, 
   Eye,
+  Clock,
   BarChart3,
+  Trash2,
+  FileText,
   PieChart
 } from "lucide-react";
 import { SEO } from "@/components/SEO";
@@ -24,6 +26,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { surveyService } from "@/services/surveyService";
 import { categories, questions } from "@/lib/surveyData";
 import type { Tables } from "@/integrations/supabase/types";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type Survey = Tables<"surveys"> & {
   survey_responses: Tables<"survey_responses">[];
@@ -51,6 +64,10 @@ export default function AdminPage() {
   const [stats, setStats] = useState({ total: 0, completed: 0, completionRate: 0 });
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "completed" | "incomplete">("all");
+  const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryStats, setCategoryStats] = useState<CategoryStats[]>([]);
 
@@ -169,6 +186,57 @@ export default function AdminPage() {
     sessionStorage.removeItem("adminAuth");
     setIsAuthenticated(false);
     setPassword("");
+  };
+
+  const handleDeleteSingle = (surveyId: string) => {
+    setSurveyToDelete(surveyId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteMultiple = () => {
+    if (selectedSurveys.length === 0) return;
+    setSurveyToDelete(null);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      if (surveyToDelete) {
+        // Delete single survey
+        await surveyService.deleteSurvey(surveyToDelete);
+      } else {
+        // Delete multiple surveys
+        await surveyService.deleteSurveys(selectedSurveys);
+      }
+      
+      // Reload data
+      await loadData();
+      setSelectedSurveys([]);
+      setSurveyToDelete(null);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting survey:", error);
+      alert("Error al eliminar la(s) encuesta(s)");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedSurveys.length === filteredSurveys.length) {
+      setSelectedSurveys([]);
+    } else {
+      setSelectedSurveys(filteredSurveys.map(s => s.id));
+    }
+  };
+
+  const toggleSelectSurvey = (surveyId: string) => {
+    setSelectedSurveys(prev => 
+      prev.includes(surveyId) 
+        ? prev.filter(id => id !== surveyId)
+        : [...prev, surveyId]
+    );
   };
 
   const filteredSurveys = surveys.filter(survey => {
@@ -346,7 +414,7 @@ export default function AdminPage() {
                       <CardTitle>Lista de Encuestas</CardTitle>
                       <CardDescription>Gestiona y visualiza todas las encuestas enviadas</CardDescription>
                     </div>
-                    <Button onClick={exportToCSV} variant="outline" size="sm">
+                    <Button onClick={exportToCSV} variant="outline" size="sm" className="gap-2">
                       <Download className="w-4 h-4 mr-2" />
                       Exportar CSV
                     </Button>
@@ -388,61 +456,100 @@ export default function AdminPage() {
                     </div>
                   </div>
 
+                  {selectedSurveys.length > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteMultiple}
+                      className="gap-2"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Eliminar Seleccionadas ({selectedSurveys.length})
+                    </Button>
+                  )}
+
                   <div className="rounded-md border overflow-x-auto">
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Nombre</TableHead>
-                          <TableHead>Fecha Creación</TableHead>
-                          <TableHead>Fecha Completado</TableHead>
-                          <TableHead>Estado</TableHead>
-                          <TableHead className="text-right">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredSurveys.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                              No se encontraron encuestas
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredSurveys.map((survey) => (
-                            <TableRow key={survey.id}>
-                              <TableCell className="font-medium">{survey.email}</TableCell>
-                              <TableCell>{survey.name}</TableCell>
-                              <TableCell>{new Date(survey.created_at).toLocaleDateString("es-MX")}</TableCell>
-                              <TableCell>
-                                {survey.completed_at 
-                                  ? new Date(survey.completed_at).toLocaleDateString("es-MX") 
-                                  : "-"}
-                              </TableCell>
-                              <TableCell>
-                                {survey.completed_at ? (
-                                  <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                                    <CheckCircle2 className="w-3 h-3 mr-1" />
-                                    Completada
-                                  </Badge>
-                                ) : (
-                                  <Badge variant="secondary">
-                                    Incompleta
-                                  </Badge>
-                                )}
-                              </TableCell>
-                              <TableCell className="text-right">
+                      <thead className="bg-muted/50">
+                        <tr>
+                          <th className="p-3 text-left">
+                            <Checkbox
+                              checked={selectedSurveys.length === filteredSurveys.length && filteredSurveys.length > 0}
+                              onCheckedChange={toggleSelectAll}
+                            />
+                          </th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Email</th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Nombre</th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Fecha Inicio</th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Fecha Completado</th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Estado</th>
+                          <th className="p-3 text-left text-sm font-semibold text-muted-foreground">Acciones</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredSurveys.map((survey) => (
+                          <tr key={survey.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                            <td className="p-3">
+                              <Checkbox
+                                checked={selectedSurveys.includes(survey.id)}
+                                onCheckedChange={() => toggleSelectSurvey(survey.id)}
+                              />
+                            </td>
+                            <td className="p-3 text-sm">{survey.email}</td>
+                            <td className="p-3 text-sm font-medium">{survey.name}</td>
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {new Date(survey.created_at).toLocaleDateString("es-MX", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </td>
+                            <td className="p-3 text-sm text-muted-foreground">
+                              {survey.completed_at 
+                                ? new Date(survey.completed_at).toLocaleDateString("es-MX", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
+                                : "-"}
+                            </td>
+                            <td className="p-3">
+                              {survey.completed_at ? (
+                                <Badge variant="default" className="bg-accent text-accent-foreground gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  Completada
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  Incompleta
+                                </Badge>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
                                 <Button
                                   size="sm"
                                   onClick={() => router.push(`/survey/${survey.unique_link_token}`)}
+                                  className="gap-1"
                                 >
-                                  <Eye className="w-4 h-4 mr-2" />
+                                  <Eye className="w-3 h-3" />
                                   Ver
                                 </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteSingle(survey.id)}
+                                  className="gap-1"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  Eliminar
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
                     </Table>
                   </div>
                 </CardContent>
@@ -552,6 +659,32 @@ export default function AdminPage() {
             </TabsContent>
           </Tabs>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {surveyToDelete ? (
+                  "Esta acción eliminará permanentemente esta encuesta y todas sus respuestas. Esta acción no se puede deshacer."
+                ) : (
+                  `Esta acción eliminará permanentemente ${selectedSurveys.length} encuesta(s) y todas sus respuestas. Esta acción no se puede deshacer.`
+                )}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDelete}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting ? "Eliminando..." : "Eliminar"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </>
   );

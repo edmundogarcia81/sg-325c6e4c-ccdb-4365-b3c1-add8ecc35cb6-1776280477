@@ -118,5 +118,43 @@ export const surveyService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async deleteSurvey(surveyId: string) {
+    // First delete all responses
+    const { error: responsesError } = await supabase
+      .from("survey_responses")
+      .delete()
+      .eq("survey_id", surveyId);
+
+    if (responsesError) throw responsesError;
+
+    // Then delete the survey
+    const { error: surveyError } = await supabase
+      .from("surveys")
+      .delete()
+      .eq("id", surveyId);
+
+    if (surveyError) throw surveyError;
+    return true;
+  },
+
+  async deleteSurveys(surveyIds: string[]) {
+    // Delete all responses for these surveys
+    const { error: responsesError } = await supabase
+      .from("survey_responses")
+      .delete()
+      .in("survey_id", surveyIds);
+
+    if (responsesError) throw responsesError;
+
+    // Delete the surveys
+    const { error: surveysError } = await supabase
+      .from("surveys")
+      .delete()
+      .in("id", surveyIds);
+
+    if (surveysError) throw surveysError;
+    return true;
   }
 };
