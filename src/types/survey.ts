@@ -9,6 +9,7 @@ export interface Question {
   id: string;
   category: CategoryId;
   text: string;
+  description?: string;
   type: QuestionType;
   options?: QuestionOption[];
   required: boolean;
