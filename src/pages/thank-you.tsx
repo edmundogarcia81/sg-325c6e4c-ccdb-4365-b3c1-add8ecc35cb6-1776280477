@@ -29,76 +29,47 @@ export default function ThankYou() {
       />
       
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center p-4">
-        <div className="w-full max-w-2xl">
-          {/* Logo B11 */}
-          <div className="text-center mb-8">
-            <div className="inline-block bg-white rounded-2xl shadow-md p-6 mb-6">
-              <Image 
-                src="/b11.jpg?v=1"
-                alt="B11 Logo"
-                width={200}
-                height={80}
-                priority
-                className="mx-auto object-contain"
-              />
+        <Card className="w-full max-w-2xl border-2">
+          <CardHeader className="text-center space-y-4 pb-8">
+            <div className="mx-auto w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+              <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
-          </div>
+            <CardTitle className="text-3xl font-bold">
+              ¡Encuesta completada!
+            </CardTitle>
+            <CardDescription className="text-base">
+              Gracias por completar el diagnóstico de madurez ERP
+            </CardDescription>
+          </CardHeader>
 
-          <Card className="shadow-2xl text-center">
-            <CardHeader>
-              <CardTitle className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-                ¡Encuesta completada!
-              </CardTitle>
-              <CardDescription className="text-lg text-muted-foreground">
-                Gracias por completar el diagnóstico de madurez ERP
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-6 space-y-6">
-              <div className="space-y-4">
-                <div className="flex items-start gap-4 p-4 bg-primary/5 rounded-lg">
-                  <Mail className="w-6 h-6 text-primary shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-medium text-foreground mb-1">
-                      Revise su correo electrónico
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Hemos enviado un resumen completo de sus respuestas a su correo electrónico. 
-                      El email incluye una liga especial para revisar las estadísticas en cualquier momento.
-                    </p>
-                  </div>
+          <CardContent className="space-y-6">
+            <div className="bg-muted/50 rounded-lg p-6 space-y-4">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <BarChart3 className="w-6 h-6 text-primary" />
                 </div>
-
-                <div className="flex items-start gap-4 p-4 bg-accent/5 rounded-lg">
-                  <BarChart3 className="w-6 h-6 text-accent shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-medium text-foreground mb-1">
-                      Análisis de resultados
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Su diagnóstico ayudará a identificar áreas de oportunidad y construir una propuesta 
-                      de implementación SAP Business One personalizada para UNICCO.
-                    </p>
-                  </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Análisis de resultados</h3>
+                  <p className="text-muted-foreground leading-relaxed">
+                    Su diagnóstico ayudará a identificar áreas de oportunidad y construir una 
+                    propuesta de implementación SAP Business One personalizada para UNICCO.
+                  </p>
                 </div>
               </div>
+            </div>
 
-              <div className="pt-4">
-                <Button
-                  onClick={() => router.push("/start")}
-                  className="w-full"
-                  size="lg"
-                >
-                  Nueva Encuesta
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <p className="text-center text-sm text-muted-foreground mt-6">
-            Si no recibe el correo en los próximos minutos, revise su carpeta de spam
-          </p>
-        </div>
+            <div className="flex justify-center pt-4">
+              <Button
+                onClick={() => router.push("/start")}
+                size="lg"
+                className="min-w-[200px]"
+              >
+                Nueva Encuesta
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </>
   );

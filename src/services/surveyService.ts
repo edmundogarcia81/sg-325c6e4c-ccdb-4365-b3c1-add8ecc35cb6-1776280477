@@ -156,5 +156,23 @@ export const surveyService = {
 
     if (surveysError) throw surveysError;
     return true;
+  },
+
+  async findIncompleteSurveyByEmail(email: string): Promise<Survey | null> {
+    const { data, error } = await supabase
+      .from("surveys")
+      .select("*")
+      .eq("email", email)
+      .is("completed_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error finding incomplete survey:", error);
+      return null;
+    }
+
+    return data;
   }
 };
