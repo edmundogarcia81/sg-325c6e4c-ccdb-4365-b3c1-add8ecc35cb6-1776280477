@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle } from "lucide-react";
+import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle, Circle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useSurvey } from "@/contexts/SurveyContext";
 import { QuestionCard } from "@/components/QuestionCard";
@@ -118,110 +118,215 @@ export default function SurveyPage() {
         title="Encuesta de Diagnóstico - UNICCO"
         description="Evaluación de madurez operativa y financiera"
       />
-      <div className="min-h-screen bg-background">
-        {/* Header with Logo */}
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+        {/* Header */}
         <div className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
-          <div className="container py-4">
+          <div className="container mx-auto px-4 py-4 lg:py-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="bg-white rounded-lg shadow-sm p-2">
-                  <Image 
-                    src="/b11.jpg?v=1"
-                    alt="B11 Logo"
-                    width={120}
-                    height={48}
-                    priority
-                    className="object-contain"
-                  />
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-lg font-heading font-bold text-foreground">Encuesta de Diagnóstico</h1>
-                  <p className="text-sm text-muted-foreground">UNICCO - Evaluación ERP</p>
-                </div>
+              <div>
+                <h1 className="text-xl lg:text-2xl font-bold text-foreground">Encuesta de Diagnóstico</h1>
+                <p className="text-xs lg:text-sm text-muted-foreground mt-1">UNICCO - Evaluación ERP</p>
               </div>
               <div className="text-right">
-                <div className="text-sm font-medium mb-1">Progreso General</div>
-                <div className="flex items-center gap-3">
-                  <Progress value={progress} className="w-32 h-2" />
-                  <span className="text-sm font-bold text-primary">{progress}%</span>
-                </div>
+                <p className="text-xs lg:text-sm font-medium text-muted-foreground">Progreso General</p>
+                <p className="text-xl lg:text-2xl font-bold text-primary">{Math.round(progress)}%</p>
               </div>
+            </div>
+            {/* Progress bar */}
+            <div className="w-full bg-muted rounded-full h-2 mt-4 overflow-hidden">
+              <div
+                className="bg-primary h-full rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
             </div>
           </div>
         </div>
 
-        <div className="container py-8 flex flex-col lg:flex-row gap-8">
-          {/* Sidebar / Progress */}
-          <aside className="lg:w-1/4 flex-shrink-0">
-            <div className="sticky top-28">
-              <SurveyProgress />
-            </div>
-          </aside>
+        {/* Main Content */}
+        <div className="container mx-auto px-4 py-6 lg:py-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Sidebar - Hidden on mobile */}
+            <div className="hidden lg:block lg:w-80 flex-shrink-0">
+              <Card className="sticky top-32">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg">Secciones</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto">
+                  {categories.map((category, index) => {
+                    const isActive = currentCategoryIndex === index;
+                    const Icon = isActive ? CheckCircle2 : Circle;
+                    const categoryProgress = calculateCategoryProgress(category.id);
+                    const isCompleted = categoryProgress === 100;
 
-          {/* Main Content */}
-          <main className="flex-1 max-w-3xl">
-            {error && (
-              <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-start gap-3 text-destructive">
-                <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                <p className="text-sm">{error}</p>
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => setCurrentCategoryIndex(index)}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          isActive
+                            ? "bg-primary text-primary-foreground shadow-md"
+                            : isCompleted
+                            ? "bg-green-50 text-green-900 hover:bg-green-100"
+                            : "bg-muted/50 hover:bg-muted"
+                        }`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <Icon
+                            className={`w-5 h-5 mt-0.5 flex-shrink-0 ${
+                              isCompleted ? "text-green-600" : ""
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-medium text-sm ${isActive ? "" : "text-foreground"}`}>
+                              {category.title}
+                            </p>
+                            {!isActive && categoryProgress > 0 && (
+                              <p className="text-xs mt-1 opacity-75">
+                                {categoryProgress}% completado
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Questions Section */}
+            <div className="flex-1 min-w-0">
+              {/* Mobile Category Header - Only visible on mobile */}
+              <div className="lg:hidden mb-4">
+                <Card className="bg-primary/5 border-primary/20">
+                  <CardContent className="py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <CheckCircle2 className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-muted-foreground font-medium">
+                          Sección {currentCategoryIndex + 1} de {categories.length}
+                        </p>
+                        <h2 className="text-base font-bold text-foreground mt-0.5">
+                          {currentCategory?.title}
+                        </h2>
+                      </div>
+                    </div>
+                    {currentCategory?.description && (
+                      <p className="text-xs text-muted-foreground mt-3 leading-relaxed">
+                        {currentCategory.description}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-            )}
 
-            <div className="mb-8">
-              <h2 className="text-3xl font-heading font-bold mb-3 flex items-center gap-3 text-foreground">
-                {currentCategory.title}
-              </h2>
-              <p className="text-muted-foreground text-lg">{currentCategory.description}</p>
-            </div>
+              {/* Desktop Category Header - Only visible on desktop */}
+              <div className="hidden lg:block mb-6">
+                <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <CheckCircle2 className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground font-medium">
+                          Sección {currentCategoryIndex + 1} de {categories.length}
+                        </p>
+                        <CardTitle className="text-xl mt-1">{currentCategory?.title}</CardTitle>
+                      </div>
+                    </div>
+                    {currentCategory?.description && (
+                      <CardDescription className="mt-3 text-sm leading-relaxed">
+                        {currentCategory.description}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                </Card>
+              </div>
 
-            <div className="space-y-6">
-              {currentCategory.questions.map((question) => (
+              <SurveyProgress
+                current={currentQuestionIndex + 1}
+                total={currentQuestions.length}
+                categoryTitle={currentCategory?.title || ""}
+              />
+
+              <div className="mt-6">
                 <QuestionCard
-                  key={question.id}
-                  question={question}
-                  response={responses[question.id]}
-                  onResponseChange={saveSurveyResponse}
+                  question={currentQuestion}
+                  answer={responses[currentQuestion.id]}
+                  onAnswer={handleAnswer}
                 />
-              ))}
-            </div>
+              </div>
 
-            {/* Navigation Navigation */}
-            <div className="mt-12 flex items-center justify-between pt-6 border-t border-border">
-              <Button
-                variant="outline"
-                onClick={handlePrevious}
-                disabled={isFirstCategory}
-                className="gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" /> Anterior
-              </Button>
-
-              {!isCategoryComplete && (
-                <p className="text-sm text-muted-foreground hidden sm:block">
-                  Por favor, responde todas las preguntas para continuar
-                </p>
-              )}
-
-              {isLastCategory ? (
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 mt-6">
                 <Button
-                  onClick={handleSubmit}
-                  disabled={!isCategoryComplete || isSubmitting}
-                  className="gap-2"
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentCategoryIndex === 0 && currentQuestionIndex === 0}
+                  className="flex-1 sm:flex-initial h-11"
                 >
-                  {isSubmitting ? "Enviando..." : "Finalizar Encuesta"}
-                  {!isSubmitting && <CheckCircle2 className="w-4 h-4" />}
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Anterior</span>
+                  <span className="sm:hidden">Atrás</span>
                 </Button>
-              ) : (
-                <Button
-                  onClick={handleNext}
-                  disabled={!isCategoryComplete}
-                  className="gap-2"
-                >
-                  Siguiente <ArrowRight className="w-4 h-4" />
-                </Button>
-              )}
+
+                {isLastQuestion ? (
+                  <Button
+                    onClick={handleComplete}
+                    disabled={!currentAnswer || isCompleting}
+                    className="flex-1 h-11 bg-green-600 hover:bg-green-700"
+                  >
+                    {isCompleting ? (
+                      <>Finalizando...</>
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline">Finalizar Encuesta</span>
+                        <span className="sm:hidden">Finalizar</span>
+                        <CheckCircle2 className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleNext}
+                    disabled={!currentAnswer}
+                    className="flex-1 sm:flex-initial h-11"
+                  >
+                    <span className="hidden sm:inline">Siguiente</span>
+                    <span className="sm:hidden">Siguiente</span>
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
+                )}
+              </div>
+
+              {/* Mobile category navigation dots - Only visible on mobile */}
+              <div className="lg:hidden mt-6 flex justify-center gap-1.5">
+                {categories.map((_, index) => {
+                  const categoryProgress = calculateCategoryProgress(categories[index].id);
+                  const isCompleted = categoryProgress === 100;
+                  const isActive = currentCategoryIndex === index;
+
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentCategoryIndex(index)}
+                      className={`h-2 rounded-full transition-all ${
+                        isActive
+                          ? "w-8 bg-primary"
+                          : isCompleted
+                          ? "w-2 bg-green-500"
+                          : "w-2 bg-muted"
+                      }`}
+                      aria-label={`Ir a sección ${index + 1}`}
+                    />
+                  );
+                })}
+              </div>
             </div>
-          </main>
+          </div>
         </div>
       </div>
     </>
