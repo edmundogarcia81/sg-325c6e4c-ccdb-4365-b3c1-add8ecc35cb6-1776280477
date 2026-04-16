@@ -12,7 +12,9 @@ serve(async (req) => {
   }
 
   try {
+    console.log("📧 Starting email send process...");
     const { email, name, token, responses } = await req.json();
+    console.log("📦 Received data:", { email, name, token, responsesCount: Object.keys(responses || {}).length });
 
     const client = new SMTPClient({
       connection: {
@@ -26,8 +28,12 @@ serve(async (req) => {
       },
     });
 
+    console.log("🔌 SMTP client configured");
+
     const siteUrl = Deno.env.get("SITE_URL") || "http://localhost:3000";
     const statsUrl = `${siteUrl}/survey/${token}`;
+
+    console.log("📊 Stats URL:", statsUrl);
 
     // Generar HTML del resumen
     let responsesSummary = "";
@@ -47,6 +53,8 @@ serve(async (req) => {
         </tr>
       `;
     });
+
+    console.log("📝 Response summary generated");
 
     const htmlBody = `
       <!DOCTYPE html>
@@ -127,6 +135,7 @@ serve(async (req) => {
       </html>
     `;
 
+    console.log("📧 Sending email...");
     await client.send({
       from: Deno.env.get("SMTP_FROM_EMAIL")!,
       to: email,
@@ -135,6 +144,7 @@ serve(async (req) => {
       html: htmlBody,
     });
 
+    console.log("✅ Email sent successfully");
     await client.close();
 
     return new Response(
@@ -142,7 +152,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("❌ Error sending email:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

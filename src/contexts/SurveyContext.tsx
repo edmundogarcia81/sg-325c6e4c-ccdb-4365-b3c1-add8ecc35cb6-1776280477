@@ -136,11 +136,24 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
 
   const completeSurvey = async () => {
     if (!surveyId) throw new Error("No survey ID");
-
+    
+    console.log("📧 Completing survey and sending email...");
+    
     try {
+      // Mark survey as completed
       await surveyService.completeSurvey(surveyId);
+      console.log("✅ Survey marked as completed");
+      
+      // Send email with results
+      if (email && name && uniqueToken) {
+        console.log("📨 Sending email to:", email);
+        await surveyService.sendSurveyEmail(email, name, uniqueToken, responses);
+        console.log("✅ Email sent successfully");
+      } else {
+        console.warn("⚠️ Missing email data:", { email, name, uniqueToken });
+      }
     } catch (error) {
-      console.error("Error completing survey:", error);
+      console.error("❌ Error completing survey:", error);
       throw error;
     }
   };
