@@ -158,7 +158,7 @@ export const surveyService = {
     return true;
   },
 
-  async findIncompleteSurveyByEmail(email: string): Promise<Survey | null> {
+  async findIncompleteSurveyByEmail(email: string): Promise<Tables<"surveys"> | null> {
     const { data, error } = await supabase
       .from("surveys")
       .select("*")
