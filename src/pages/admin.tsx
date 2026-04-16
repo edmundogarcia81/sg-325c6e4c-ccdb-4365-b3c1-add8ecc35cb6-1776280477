@@ -687,7 +687,7 @@ export default function AdminPage() {
                             <div 
                               className="h-full rounded-full transition-all duration-500"
                               style={{ 
-                                width: `${Math.max(10, (stat.validResponses / Math.max(...categoryStats.map(s => s.validResponses))) * 100}%`,
+                                width: `${Math.max(10, (stat.validResponses / (Math.max(...categoryStats.map(s => s.validResponses)) || 1)) * 100}%`,
                                 backgroundColor: `hsl(${220 + index * 30}, 70%, ${50 + index * 5}%)`
                               }}
                             />
