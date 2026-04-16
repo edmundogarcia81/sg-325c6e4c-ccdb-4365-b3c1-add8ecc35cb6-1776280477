@@ -61,11 +61,14 @@ export default function StartSurvey() {
     setIsLoading(true);
 
     try {
+      console.log("Creating survey with:", { name: name.trim(), email: email.trim() });
       const survey = await surveyService.createSurvey({ name: name.trim(), email: email.trim() });
+      console.log("Survey created:", survey);
 
       localStorage.setItem("currentSurveyId", survey.id);
       localStorage.setItem("surveyEmail", email.trim());
       localStorage.setItem("surveyName", name.trim());
+      console.log("LocalStorage saved, redirecting...");
 
       toast({
         title: "¡Listo para comenzar!",
@@ -73,6 +76,7 @@ export default function StartSurvey() {
       });
 
       setTimeout(() => {
+        console.log("Redirecting to /");
         router.push("/");
       }, 500);
     } catch (error) {

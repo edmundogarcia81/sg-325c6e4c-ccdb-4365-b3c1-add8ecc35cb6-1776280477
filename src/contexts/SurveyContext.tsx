@@ -39,12 +39,33 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   // Load survey configuration on mount
   useEffect(() => {
     loadSurveyConfig();
+    loadFromLocalStorage();
   }, []);
+
+  const loadFromLocalStorage = () => {
+    console.log("Loading from localStorage...");
+    const storedEmail = localStorage.getItem("surveyEmail");
+    const storedName = localStorage.getItem("surveyName");
+    const storedId = localStorage.getItem("currentSurveyId");
+    
+    console.log("LocalStorage data:", { storedEmail, storedName, storedId });
+
+    if (storedEmail && storedName && storedId) {
+      setEmail(storedEmail);
+      setName(storedName);
+      setSurveyId(storedId);
+      console.log("Survey data loaded from localStorage");
+    } else {
+      console.log("No survey data in localStorage");
+    }
+  };
 
   const loadSurveyConfig = async () => {
     try {
+      console.log("Loading survey config...");
       setLoadingSurveyConfig(true);
       const data = await surveyConfigService.getCategoriesWithQuestions();
+      console.log("Survey config loaded:", data.length, "categories");
       setCategories(data);
     } catch (error) {
       console.error("Error loading survey config:", error);
@@ -55,7 +76,9 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
 
   const loadSurvey = async (email: string, name: string) => {
     try {
+      console.log("loadSurvey called with:", { email, name });
       const survey = await surveyService.createSurvey({ email, name });
+      console.log("Survey created in loadSurvey:", survey);
       setSurveyId(survey.id);
       setUniqueToken(survey.unique_link_token);
       setEmail(email);

@@ -13,15 +13,15 @@ import { SurveyProgress } from "@/components/SurveyProgress";
 export default function SurveyPage() {
   const router = useRouter();
   const { 
-    surveyId, 
-    uniqueToken, 
+    email, 
+    name, 
     categories, 
     responses, 
-    loadingSurveyConfig,
-    currentCategoryIndex,
+    currentCategoryIndex, 
     setCurrentCategoryIndex,
     saveSurveyResponse,
-    completeSurvey
+    completeSurvey,
+    loadingSurveyConfig
   } = useSurvey();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,15 +40,33 @@ export default function SurveyPage() {
   const progress = getProgress();
 
   useEffect(() => {
-    if (!surveyId && !loadingSurveyConfig) {
-      router.push('/start');
+    console.log("SurveyPage mounted");
+    console.log("Survey context:", { email, name, categoriesCount: categories.length, loadingSurveyConfig });
+    
+    // Redirect to start if no survey data
+    if (!loadingSurveyConfig && !email) {
+      console.log("No survey data, redirecting to /start");
+      router.push("/start");
     }
-  }, [surveyId, router, loadingSurveyConfig]);
+  }, [email, loadingSurveyConfig, router, name, categories.length]);
 
-  if (loadingSurveyConfig || !categories.length) {
+  if (loadingSurveyConfig) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Cargando encuesta...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!categories || categories.length === 0) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-destructive">Error: No se pudieron cargar las categorías de la encuesta.</p>
+        </div>
       </div>
     );
   }
@@ -88,8 +106,6 @@ export default function SurveyPage() {
       setIsSubmitting(false);
     }
   };
-
-  if (!surveyId) return null;
 
   return (
     <>
