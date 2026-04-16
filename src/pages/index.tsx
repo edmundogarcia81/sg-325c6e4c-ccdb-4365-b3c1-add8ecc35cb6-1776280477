@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useSurvey } from "@/contexts/SurveyContext";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useRouter } from "next/router";
-import { SurveyProgress } from "@/components/SurveyProgress";
 
 export default function SurveyPage() {
   const router = useRouter();
@@ -279,17 +278,17 @@ export default function SurveyPage() {
                 </Card>
               </div>
 
-              <SurveyProgress
-                current={currentQuestionIndex + 1}
-                total={currentQuestions.length}
-                categoryTitle={currentCategory?.title || ""}
-              />
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground bg-muted/50 px-3 py-1 rounded-full">
+                  Pregunta {currentQuestionIndex + 1} de {currentQuestions.length}
+                </span>
+              </div>
 
-              <div className="mt-6">
+              <div className="mt-2">
                 <QuestionCard
                   question={currentQuestion}
-                  answer={responses[currentQuestion.id]}
-                  onAnswer={handleAnswer}
+                  response={responses[currentQuestion.id]}
+                  onResponseChange={handleAnswer}
                 />
               </div>
 
