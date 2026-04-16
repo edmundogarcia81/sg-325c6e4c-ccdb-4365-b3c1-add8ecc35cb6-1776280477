@@ -687,7 +687,7 @@ export default function AdminPage() {
                             <div 
                               className="h-full rounded-full transition-all duration-500"
                               style={{ 
-                                width: `${Math.max(10, (stat.validResponses / Math.max(...categoryStats.map(s => s.validResponses))) * 100)}%`,
+                                width: `${Math.max(10, (stat.validResponses / Math.max(...categoryStats.map(s => s.validResponses))) * 100}%`,
                                 backgroundColor: `hsl(${220 + index * 30}, 70%, ${50 + index * 5}%)`
                               }}
                             />
@@ -766,7 +766,7 @@ export default function AdminPage() {
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-primary">
-                        {categories.reduce((sum, cat) => sum + (cat.questions?.length || 0), 0)}
+                        {categoriesWithQuestions.reduce((sum, cat) => sum + (cat.questions?.length || 0), 0)}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">Preguntas Total</p>
                     </div>
@@ -777,7 +777,7 @@ export default function AdminPage() {
                   <CardContent className="pt-6">
                     <div className="text-center">
                       <p className="text-3xl font-bold text-primary">
-                        {Math.round(categoryStats.reduce((sum, s) => sum + s.validResponses, 0) / categoryStats.length) || 0}
+                        {Math.round(categoryStats.reduce((sum, s) => sum + s.validResponses, 0) / (categoryStats.length || 1)) || 0}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">Promedio Respuestas</p>
                     </div>
