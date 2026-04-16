@@ -40,12 +40,17 @@ export default function SurveyPage() {
   const progress = getProgress();
 
   useEffect(() => {
-    console.log("SurveyPage mounted");
-    console.log("Survey context:", { email, name, categoriesCount: categories.length, loadingSurveyConfig });
+    console.log("🏠 SurveyPage mounted");
+    console.log("📊 Survey context:", { 
+      email, 
+      name, 
+      categoriesCount: categories.length, 
+      loadingSurveyConfig 
+    });
     
     // Redirect to start if no survey data
     if (!loadingSurveyConfig && !email) {
-      console.log("No survey data, redirecting to /start");
+      console.log("⚠️ No survey data, redirecting to /start");
       router.push("/start");
     }
   }, [email, loadingSurveyConfig, router, name, categories.length]);

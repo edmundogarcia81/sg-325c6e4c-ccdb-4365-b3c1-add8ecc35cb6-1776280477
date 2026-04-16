@@ -61,26 +61,30 @@ export default function StartSurvey() {
     setIsLoading(true);
 
     try {
-      console.log("Creating survey with:", { name: name.trim(), email: email.trim() });
+      console.log("🚀 Creating survey with:", { name: name.trim(), email: email.trim() });
       const survey = await surveyService.createSurvey({ name: name.trim(), email: email.trim() });
-      console.log("Survey created:", survey);
+      console.log("✅ Survey created:", survey);
 
+      // Save to localStorage
       localStorage.setItem("currentSurveyId", survey.id);
       localStorage.setItem("surveyEmail", email.trim());
       localStorage.setItem("surveyName", name.trim());
-      console.log("LocalStorage saved, redirecting...");
+      console.log("💾 LocalStorage saved:", {
+        id: survey.id,
+        email: email.trim(),
+        name: name.trim()
+      });
 
       toast({
         title: "¡Listo para comenzar!",
         description: "Iniciando encuesta de diagnóstico..."
       });
 
-      setTimeout(() => {
-        console.log("Redirecting to /");
-        router.push("/");
-      }, 500);
+      // Navigate to survey page
+      console.log("🔄 Navigating to /");
+      window.location.href = "/";
     } catch (error) {
-      console.error("Error creating survey:", error);
+      console.error("❌ Error creating survey:", error);
       toast({
         variant: "destructive",
         title: "Error",

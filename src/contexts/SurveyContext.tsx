@@ -43,32 +43,32 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loadFromLocalStorage = () => {
-    console.log("Loading from localStorage...");
+    console.log("📂 Loading from localStorage...");
     const storedEmail = localStorage.getItem("surveyEmail");
     const storedName = localStorage.getItem("surveyName");
     const storedId = localStorage.getItem("currentSurveyId");
     
-    console.log("LocalStorage data:", { storedEmail, storedName, storedId });
+    console.log("📦 LocalStorage data:", { storedEmail, storedName, storedId });
 
     if (storedEmail && storedName && storedId) {
       setEmail(storedEmail);
       setName(storedName);
       setSurveyId(storedId);
-      console.log("Survey data loaded from localStorage");
+      console.log("✅ Survey data loaded from localStorage");
     } else {
-      console.log("No survey data in localStorage");
+      console.log("⚠️ No survey data in localStorage");
     }
   };
 
   const loadSurveyConfig = async () => {
     try {
-      console.log("Loading survey config...");
+      console.log("🔧 Loading survey config...");
       setLoadingSurveyConfig(true);
       const data = await surveyConfigService.getCategoriesWithQuestions();
-      console.log("Survey config loaded:", data.length, "categories");
+      console.log("✅ Survey config loaded:", data.length, "categories");
       setCategories(data);
     } catch (error) {
-      console.error("Error loading survey config:", error);
+      console.error("❌ Error loading survey config:", error);
     } finally {
       setLoadingSurveyConfig(false);
     }
