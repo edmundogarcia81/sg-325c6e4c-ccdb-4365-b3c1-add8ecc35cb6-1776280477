@@ -677,23 +677,28 @@ export default function AdminPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3">
-                      {categoryStats.slice(0, 5).map((stat, index) => (
-                        <div key={stat.id}>
-                          <div className="flex justify-between text-sm mb-1.5">
-                            <span className="font-medium truncate flex-1 mr-2">{stat.title}</span>
-                            <span className="font-bold text-primary">{stat.validResponses}</span>
+                      {categoryStats.slice(0, 5).map((stat, index) => {
+                        const maxResponses = Math.max(...categoryStats.map(s => s.validResponses), 1);
+                        const widthPercentage = Math.max(10, (stat.validResponses / maxResponses) * 100);
+                        
+                        return (
+                          <div key={stat.id}>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="font-medium truncate flex-1 mr-2">{stat.title}</span>
+                              <span className="font-bold text-primary">{stat.validResponses}</span>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${widthPercentage}%`,
+                                  backgroundColor: `hsl(${220 + index * 30}, 70%, ${50 + index * 5}%)`
+                                }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                            <div 
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{ 
-                                width: `${Math.max(10, (stat.validResponses / (Math.max(...categoryStats.map(s => s.validResponses)) || 1)) * 100}%`,
-                                backgroundColor: `hsl(${220 + index * 30}, 70%, ${50 + index * 5}%)`
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
