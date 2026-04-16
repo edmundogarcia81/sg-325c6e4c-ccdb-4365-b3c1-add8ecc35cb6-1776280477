@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-import { ArrowRight, ArrowLeft, FileText, CheckCircle2, AlertCircle, Circle } from "lucide-react";
+import { ArrowRight, ArrowLeft, CheckCircle2, Circle } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { useSurvey } from "@/contexts/SurveyContext";
 import { QuestionCard } from "@/components/QuestionCard";
 import { useRouter } from "next/router";
-import Image from "next/image";
 import { SurveyProgress } from "@/components/SurveyProgress";
 
 export default function SurveyPage() {
@@ -24,20 +22,33 @@ export default function SurveyPage() {
     loadingSurveyConfig
   } = useSurvey();
   
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  // Calculate progress
-  const getProgress = () => {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isCompleting, setIsCompleting] = useState(false);
+
+  // Get progress percentage
+  const getProgressPercentage = () => {
     if (!categories.length) return 0;
-    
     const totalQuestions = categories.reduce((acc, cat) => acc + cat.questions.length, 0);
     const answeredQuestions = Object.keys(responses).length;
-    
     return totalQuestions > 0 ? Math.round((answeredQuestions / totalQuestions) * 100) : 0;
   };
 
-  const progress = getProgress();
+  const progressPercentage = getProgressPercentage();
+
+  // Calculate category-specific progress
+  const calculateCategoryProgress = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return 0;
+    
+    const categoryQuestions = category.questions;
+    const answeredInCategory = categoryQuestions.filter(
+      q => responses[q.id] && (responses[q.id].answer_value || responses[q.id].is_not_my_role)
+    ).length;
+    
+    return categoryQuestions.length > 0 
+      ? Math.round((answeredInCategory / categoryQuestions.length) * 100) 
+      : 0;
+  };
 
   useEffect(() => {
     console.log("🏠 SurveyPage mounted");
@@ -77,38 +88,57 @@ export default function SurveyPage() {
   }
 
   const currentCategory = categories[currentCategoryIndex];
-  const isFirstCategory = currentCategoryIndex === 0;
+  const currentQuestions = currentCategory?.questions || [];
+  const currentQuestion = currentQuestions[currentQuestionIndex];
+  const currentAnswer = currentQuestion ? responses[currentQuestion.id] : null;
+  
+  const isLastQuestionInCategory = currentQuestionIndex === currentQuestions.length - 1;
   const isLastCategory = currentCategoryIndex === categories.length - 1;
+  const isLastQuestion = isLastQuestionInCategory && isLastCategory;
 
-  // Check if all questions in current category are answered
-  const isCategoryComplete = currentCategory.questions.every(
-    q => responses[q.id] && (responses[q.id].answer_value || responses[q.id].is_not_my_role)
-  );
+  const handleAnswer = async (questionId: string, value: string, isNotMyRole: boolean) => {
+    await saveSurveyResponse(questionId, value, isNotMyRole);
+  };
 
   const handleNext = () => {
-    if (isCategoryComplete && !isLastCategory) {
-      setCurrentCategoryIndex(currentCategoryIndex + 1);
+    if (isLastQuestionInCategory) {
+      // Move to next category
+      if (!isLastCategory) {
+        setCurrentCategoryIndex(currentCategoryIndex + 1);
+        setCurrentQuestionIndex(0);
+        window.scrollTo(0, 0);
+      }
+    } else {
+      // Move to next question in same category
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
       window.scrollTo(0, 0);
     }
   };
 
   const handlePrevious = () => {
-    if (!isFirstCategory) {
-      setCurrentCategoryIndex(currentCategoryIndex - 1);
+    if (currentQuestionIndex === 0) {
+      // Move to previous category
+      if (currentCategoryIndex > 0) {
+        const prevCategory = categories[currentCategoryIndex - 1];
+        setCurrentCategoryIndex(currentCategoryIndex - 1);
+        setCurrentQuestionIndex(prevCategory.questions.length - 1);
+        window.scrollTo(0, 0);
+      }
+    } else {
+      // Move to previous question in same category
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
       window.scrollTo(0, 0);
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    setError(null);
+  const handleComplete = async () => {
+    setIsCompleting(true);
     try {
       await completeSurvey();
       router.push('/thank-you');
     } catch (err) {
-      setError("Hubo un error al enviar la encuesta. Por favor, intenta de nuevo.");
-      console.error(err);
-      setIsSubmitting(false);
+      console.error("Error completing survey:", err);
+      setIsCompleting(false);
     }
   };
 
@@ -129,14 +159,14 @@ export default function SurveyPage() {
               </div>
               <div className="text-right">
                 <p className="text-xs lg:text-sm font-medium text-muted-foreground">Progreso General</p>
-                <p className="text-xl lg:text-2xl font-bold text-primary">{Math.round(progress)}%</p>
+                <p className="text-xl lg:text-2xl font-bold text-primary">{Math.round(progressPercentage)}%</p>
               </div>
             </div>
             {/* Progress bar */}
             <div className="w-full bg-muted rounded-full h-2 mt-4 overflow-hidden">
               <div
                 className="bg-primary h-full rounded-full transition-all duration-500"
-                style={{ width: `${progress}%` }}
+                style={{ width: `${progressPercentage}%` }}
               />
             </div>
           </div>
@@ -161,7 +191,10 @@ export default function SurveyPage() {
                     return (
                       <button
                         key={category.id}
-                        onClick={() => setCurrentCategoryIndex(index)}
+                        onClick={() => {
+                          setCurrentCategoryIndex(index);
+                          setCurrentQuestionIndex(0);
+                        }}
                         className={`w-full text-left p-3 rounded-lg transition-all ${
                           isActive
                             ? "bg-primary text-primary-foreground shadow-md"
@@ -312,7 +345,10 @@ export default function SurveyPage() {
                   return (
                     <button
                       key={index}
-                      onClick={() => setCurrentCategoryIndex(index)}
+                      onClick={() => {
+                        setCurrentCategoryIndex(index);
+                        setCurrentQuestionIndex(0);
+                      }}
                       className={`h-2 rounded-full transition-all ${
                         isActive
                           ? "w-8 bg-primary"
