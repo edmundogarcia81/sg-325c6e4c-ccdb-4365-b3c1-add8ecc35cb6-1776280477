@@ -61,17 +61,24 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
                   onValueChange={handleValueChange}
                   className="space-y-3"
                 >
-                  {options.map((option: string, index: number) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <RadioGroupItem value={option} id={`${question.id}-${index}`} className="mt-1" />
-                      <Label
-                        htmlFor={`${question.id}-${index}`}
-                        className="font-normal leading-relaxed cursor-pointer flex-1"
-                      >
-                        {option}
-                      </Label>
-                    </div>
-                  ))}
+                  {options.map((option: string, index: number) => {
+                    const optionId = `${question.id}-option-${index}`;
+                    return (
+                      <div key={index} className="flex items-start space-x-3 group cursor-pointer">
+                        <RadioGroupItem 
+                          value={option} 
+                          id={optionId}
+                          className="mt-1 cursor-pointer" 
+                        />
+                        <Label
+                          htmlFor={optionId}
+                          className="font-normal leading-relaxed cursor-pointer flex-1 group-hover:text-primary transition-colors"
+                        >
+                          {option}
+                        </Label>
+                      </div>
+                    );
+                  })}
                 </RadioGroup>
               )}
 
@@ -81,15 +88,15 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
                   onValueChange={handleValueChange}
                   className="space-y-3"
                 >
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="Sí" id={`${question.id}-yes`} />
-                    <Label htmlFor={`${question.id}-yes`} className="font-normal cursor-pointer">
+                  <div className="flex items-center space-x-3 group cursor-pointer">
+                    <RadioGroupItem value="Sí" id={`${question.id}-yes`} className="cursor-pointer" />
+                    <Label htmlFor={`${question.id}-yes`} className="font-normal cursor-pointer group-hover:text-primary transition-colors">
                       Sí
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="No" id={`${question.id}-no`} />
-                    <Label htmlFor={`${question.id}-no`} className="font-normal cursor-pointer">
+                  <div className="flex items-center space-x-3 group cursor-pointer">
+                    <RadioGroupItem value="No" id={`${question.id}-no`} className="cursor-pointer" />
+                    <Label htmlFor={`${question.id}-no`} className="font-normal cursor-pointer group-hover:text-primary transition-colors">
                       No
                     </Label>
                   </div>
