@@ -220,11 +220,13 @@ export default function AdminPage() {
         await surveyService.deleteSurveys(selectedSurveys);
       }
       
-      // Reload data
+      // Reload data without changing tabs
       await loadData();
       setSelectedSurveys([]);
       setSurveyToDelete(null);
       setDeleteDialogOpen(false);
+      
+      // No router.push - stay on current tab
     } catch (error) {
       console.error("Error deleting survey:", error);
       alert("Error al eliminar la(s) encuesta(s)");
@@ -557,6 +559,243 @@ export default function AdminPage() {
                 Gestión de Encuesta
               </TabsTrigger>
             </TabsList>
+
+            <TabsContent value="dashboard" className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {/* Total Surveys Card */}
+                <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-blue-700 mb-1">Total Encuestas</p>
+                        <p className="text-4xl font-bold text-blue-900">{stats.total}</p>
+                        <p className="text-xs text-blue-600 mt-2">Enviadas en total</p>
+                      </div>
+                      <div className="w-16 h-16 bg-blue-500/10 rounded-xl flex items-center justify-center">
+                        <FileText className="w-8 h-8 text-blue-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Completed Surveys Card */}
+                <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-green-700 mb-1">Completadas</p>
+                        <p className="text-4xl font-bold text-green-900">{stats.completed}</p>
+                        <p className="text-xs text-green-600 mt-2">
+                          {stats.total - stats.completed} pendientes
+                        </p>
+                      </div>
+                      <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center">
+                        <CheckCircle2 className="w-8 h-8 text-green-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Completion Rate Card */}
+                <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-purple-700 mb-1">Tasa Finalización</p>
+                        <p className="text-4xl font-bold text-purple-900">{stats.completionRate}%</p>
+                        <p className="text-xs text-purple-600 mt-2">Meta: 80%</p>
+                      </div>
+                      <div className="w-16 h-16 bg-purple-500/10 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="w-8 h-8 text-purple-600" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Completion Progress Chart */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="w-5 h-5" />
+                      Distribución de Estado
+                    </CardTitle>
+                    <CardDescription>Encuestas completadas vs pendientes</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="font-medium">Completadas</span>
+                          <span className="font-bold text-green-600">{stats.completed}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-green-500 h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${stats.completionRate}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="font-medium">Incompletas</span>
+                          <span className="font-bold text-orange-600">{stats.total - stats.completed}</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
+                          <div 
+                            className="bg-orange-500 h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${100 - stats.completionRate}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-border grid grid-cols-2 gap-4">
+                        <div className="text-center p-3 bg-green-50 rounded-lg">
+                          <p className="text-2xl font-bold text-green-600">{stats.completionRate}%</p>
+                          <p className="text-xs text-muted-foreground mt-1">Completadas</p>
+                        </div>
+                        <div className="text-center p-3 bg-orange-50 rounded-lg">
+                          <p className="text-2xl font-bold text-orange-600">{100 - stats.completionRate}%</p>
+                          <p className="text-xs text-muted-foreground mt-1">Pendientes</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Category Response Rate */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <BarChart3 className="w-5 h-5" />
+                      Top Categorías por Respuestas
+                    </CardTitle>
+                    <CardDescription>Categorías con más participación</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {categoryStats.slice(0, 5).map((stat, index) => (
+                        <div key={stat.id}>
+                          <div className="flex justify-between text-sm mb-1.5">
+                            <span className="font-medium truncate flex-1 mr-2">{stat.title}</span>
+                            <span className="font-bold text-primary">{stat.validResponses}</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ 
+                                width: `${Math.max(10, (stat.validResponses / Math.max(...categoryStats.map(s => s.validResponses))) * 100)}%`,
+                                backgroundColor: `hsl(${220 + index * 30}, 70%, ${50 + index * 5}%)`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Recent Activity */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Actividad Reciente
+                  </CardTitle>
+                  <CardDescription>Últimas encuestas completadas</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {surveys
+                      .filter(s => s.completed_at)
+                      .slice(0, 5)
+                      .map((survey) => (
+                        <div key={survey.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                              <CheckCircle2 className="w-5 h-5 text-primary" />
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{survey.name}</p>
+                              <p className="text-xs text-muted-foreground">{survey.email}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(survey.completed_at!).toLocaleDateString("es-MX", {
+                                day: "2-digit",
+                                month: "short"
+                              })}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(survey.completed_at!).toLocaleTimeString("es-MX", {
+                                hour: "2-digit",
+                                minute: "2-digit"
+                              })}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    {surveys.filter(s => s.completed_at).length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        No hay encuestas completadas aún
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Stats Grid */}
+              <div className="grid gap-4 md:grid-cols-4">
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {categories.length}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">Categorías</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {categories.reduce((sum, cat) => sum + (cat.questions?.length || 0), 0)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">Preguntas Total</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {Math.round(categoryStats.reduce((sum, s) => sum + s.validResponses, 0) / categoryStats.length) || 0}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">Promedio Respuestas</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="pt-6">
+                    <div className="text-center">
+                      <p className="text-3xl font-bold text-primary">
+                        {categoryStats.reduce((sum, s) => sum + s.notMyRoleResponses, 0)}
+                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">"No es mi rol"</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
             <TabsContent value="surveys" className="space-y-4">
               <Card>
