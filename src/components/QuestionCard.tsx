@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Question } from "@/services/surveyConfigService";
@@ -57,50 +56,75 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
           {!isNotMyRole && (
             <>
               {question.type === "likert" && options.length > 0 && (
-                <RadioGroup
-                  value={selectedValue}
-                  onValueChange={handleValueChange}
-                  className="space-y-3"
-                >
+                <div className="space-y-3">
                   {options.map((option: string, index: number) => {
-                    const optionId = `${question.id}-${index}`;
+                    const optionId = `${question.id}-option-${index}`;
+                    const isSelected = selectedValue === option;
+                    
                     return (
-                      <div key={optionId} className="flex items-start space-x-3">
-                        <RadioGroupItem 
-                          value={option} 
-                          id={optionId}
-                        />
-                        <Label
+                      <div 
+                        key={index} 
+                        className="flex items-start space-x-3 cursor-pointer group"
+                        onClick={() => handleValueChange(option)}
+                      >
+                        <div className="flex items-center h-6 pt-0.5">
+                          <div className={`
+                            w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                            ${isSelected 
+                              ? "border-primary bg-primary" 
+                              : "border-input group-hover:border-primary/50"
+                            }
+                          `}>
+                            {isSelected && (
+                              <div className="w-2 h-2 rounded-full bg-white"></div>
+                            )}
+                          </div>
+                        </div>
+                        <label
                           htmlFor={optionId}
-                          className="font-normal leading-relaxed cursor-pointer flex-1"
+                          className="font-normal leading-relaxed cursor-pointer flex-1 select-none group-hover:text-primary transition-colors"
                         >
                           {option}
-                        </Label>
+                        </label>
                       </div>
                     );
                   })}
-                </RadioGroup>
+                </div>
               )}
 
               {question.type === "yesno" && (
-                <RadioGroup
-                  value={selectedValue}
-                  onValueChange={handleValueChange}
-                  className="space-y-3"
-                >
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="Sí" id={`${question.id}-yes`} />
-                    <Label htmlFor={`${question.id}-yes`} className="font-normal cursor-pointer">
-                      Sí
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <RadioGroupItem value="No" id={`${question.id}-no`} />
-                    <Label htmlFor={`${question.id}-no`} className="font-normal cursor-pointer">
-                      No
-                    </Label>
-                  </div>
-                </RadioGroup>
+                <div className="space-y-3">
+                  {["Sí", "No"].map((option) => {
+                    const optionId = `${question.id}-${option}`;
+                    const isSelected = selectedValue === option;
+                    
+                    return (
+                      <div 
+                        key={option}
+                        className="flex items-center space-x-3 cursor-pointer group"
+                        onClick={() => handleValueChange(option)}
+                      >
+                        <div className={`
+                          w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
+                          ${isSelected 
+                            ? "border-primary bg-primary" 
+                            : "border-input group-hover:border-primary/50"
+                          }
+                        `}>
+                          {isSelected && (
+                            <div className="w-2 h-2 rounded-full bg-white"></div>
+                          )}
+                        </div>
+                        <label
+                          htmlFor={optionId}
+                          className="font-normal cursor-pointer select-none group-hover:text-primary transition-colors"
+                        >
+                          {option}
+                        </label>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
 
               {question.type === "open" && (
