@@ -1,10 +1,14 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Question } from "@/services/surveyConfigService";
 import type { Tables } from "@/integrations/supabase/types";
+import { AutoSaveIndicator } from "./AutoSaveIndicator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 type SurveyResponse = Tables<"survey_responses">;
 
@@ -15,28 +19,46 @@ interface QuestionCardProps {
 }
 
 export function QuestionCard({ question, response, onResponseChange }: QuestionCardProps) {
-  const [selectedValue, setSelectedValue] = useState<string>(response?.answer_value || "");
   const [isNotMyRole, setIsNotMyRole] = useState(response?.is_not_my_role || false);
+  const [selectedValue, setSelectedValue] = useState<string | null>(response?.answer_value || null);
+  const [openResponse, setOpenResponse] = useState(response?.answer_value || "");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
-  useEffect(() => {
-    setSelectedValue(response?.answer_value || "");
-    setIsNotMyRole(response?.is_not_my_role || false);
-  }, [response]);
-
-  const handleValueChange = (value: string) => {
-    console.log("Value changed to:", value);
-    setSelectedValue(value);
-    setIsNotMyRole(false);
-    onResponseChange(question.id, value, false);
+  const handleSave = async (value: string | null, notMyRole: boolean) => {
+    setSaveStatus("saving");
+    try {
+      await onResponseChange(question.id, value, notMyRole);
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 2000);
+    } catch (error) {
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    }
   };
 
-  const handleNotMyRoleChange = (checked: boolean) => {
+  const handleNotMyRoleChange = async (checked: boolean) => {
     setIsNotMyRole(checked);
     if (checked) {
-      setSelectedValue("");
-      onResponseChange(question.id, null, true);
-    } else {
-      onResponseChange(question.id, selectedValue || null, false);
+      setSelectedValue(null);
+      setOpenResponse("");
+    }
+    await handleSave(checked ? null : selectedValue, checked);
+  };
+
+  const handleChoiceChange = async (value: string) => {
+    setSelectedValue(value);
+    setIsNotMyRole(false);
+    await handleSave(value, false);
+  };
+
+  const handleOpenResponseChange = (value: string) => {
+    setOpenResponse(value);
+  };
+
+  const handleOpenResponseBlur = async () => {
+    if (openResponse.trim()) {
+      setIsNotMyRole(false);
+      await handleSave(openResponse.trim(), false);
     }
   };
 
@@ -47,110 +69,70 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
 
   return (
     <Card className="border-2 hover:border-primary/20 transition-colors">
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <Label className="text-base font-medium leading-relaxed block">
-            {question.text}
-          </Label>
-
-          {!isNotMyRole && (
-            <>
-              {question.type === "likert" && options.length > 0 && (
-                <div className="space-y-3">
-                  {options.map((option: string, index: number) => {
-                    const optionId = `${question.id}-option-${index}`;
-                    const isSelected = selectedValue === option;
-                    
-                    return (
-                      <div 
-                        key={index} 
-                        className="flex items-start space-x-3 cursor-pointer group"
-                        onClick={() => handleValueChange(option)}
-                      >
-                        <div className="flex items-center h-6 pt-0.5">
-                          <div className={`
-                            w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                            ${isSelected 
-                              ? "border-primary bg-primary" 
-                              : "border-input group-hover:border-primary/50"
-                            }
-                          `}>
-                            {isSelected && (
-                              <div className="w-2 h-2 rounded-full bg-white"></div>
-                            )}
-                          </div>
-                        </div>
-                        <label
-                          htmlFor={optionId}
-                          className="font-normal leading-relaxed cursor-pointer flex-1 select-none group-hover:text-primary transition-colors"
-                        >
-                          {option}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {question.type === "yesno" && (
-                <div className="space-y-3">
-                  {["Sí", "No"].map((option) => {
-                    const optionId = `${question.id}-${option}`;
-                    const isSelected = selectedValue === option;
-                    
-                    return (
-                      <div 
-                        key={option}
-                        className="flex items-center space-x-3 cursor-pointer group"
-                        onClick={() => handleValueChange(option)}
-                      >
-                        <div className={`
-                          w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                          ${isSelected 
-                            ? "border-primary bg-primary" 
-                            : "border-input group-hover:border-primary/50"
-                          }
-                        `}>
-                          {isSelected && (
-                            <div className="w-2 h-2 rounded-full bg-white"></div>
-                          )}
-                        </div>
-                        <label
-                          htmlFor={optionId}
-                          className="font-normal cursor-pointer select-none group-hover:text-primary transition-colors"
-                        >
-                          {option}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {question.type === "open" && (
-                <Textarea
-                  value={selectedValue}
-                  onChange={(e) => handleValueChange(e.target.value)}
-                  placeholder="Escriba su respuesta aquí..."
-                  className="min-h-[120px] resize-none"
-                />
-              )}
-            </>
-          )}
-
-          <div className="flex items-center space-x-2 pt-4 border-t border-border">
-            <Checkbox
-              id={`${question.id}-not-my-role`}
-              checked={isNotMyRole}
-              onCheckedChange={handleNotMyRoleChange}
-            />
-            <Label
-              htmlFor={`${question.id}-not-my-role`}
-              className="text-sm text-muted-foreground cursor-pointer"
-            >
-              No es mi rol / No aplica
-            </Label>
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-start gap-2">
+              <Badge variant="outline" className="mt-0.5 shrink-0">
+                {questionNumber}
+              </Badge>
+              <CardTitle className="text-base leading-relaxed">
+                {question.text}
+              </CardTitle>
+            </div>
           </div>
+          <AutoSaveIndicator status={saveStatus} />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {question.type === "choice" && question.options && (
+          <RadioGroup
+            value={selectedValue || ""}
+            onValueChange={handleChoiceChange}
+            disabled={isNotMyRole}
+            className="space-y-3"
+          >
+            {question.options.map((option, index) => (
+              <div key={index} className="flex items-center space-x-2">
+                <RadioGroupItem value={option} id={`${question.id}-${index}`} />
+                <Label
+                  htmlFor={`${question.id}-${index}`}
+                  className={`flex-1 cursor-pointer ${
+                    isNotMyRole ? "text-muted-foreground" : ""
+                  }`}
+                >
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </RadioGroup>
+        )}
+
+        {question.type === "open" && (
+          <Textarea
+            placeholder="Escribe tu respuesta aquí..."
+            value={openResponse}
+            onChange={(e) => handleOpenResponseChange(e.target.value)}
+            onBlur={handleOpenResponseBlur}
+            disabled={isNotMyRole}
+            className="min-h-[100px] resize-none"
+          />
+        )}
+
+        <Separator />
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id={`not-my-role-${question.id}`}
+            checked={isNotMyRole}
+            onCheckedChange={handleNotMyRoleChange}
+          />
+          <Label
+            htmlFor={`not-my-role-${question.id}`}
+            className="text-sm text-muted-foreground cursor-pointer"
+          >
+            No es mi rol
+          </Label>
         </div>
       </CardContent>
     </Card>

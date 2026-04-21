@@ -397,25 +397,74 @@ export default function AdminPage() {
     return matchesSearch && matchesFilter;
   });
 
-  const exportToCSV = () => {
-    const headers = ["Email", "Nombre", "Fecha Creación", "Fecha Completado", "Estado"];
-    const rows = filteredSurveys.map(survey => [
-      survey.email,
-      survey.name,
-      new Date(survey.created_at).toLocaleDateString("es-MX"),
-      survey.completed_at ? new Date(survey.completed_at).toLocaleDateString("es-MX") : "N/A",
-      survey.completed_at ? "Completada" : "Incompleta"
-    ]);
+  const exportToCSV = async () => {
+    // Get all categories and questions for headers
+    const allQuestions: { id: string; category: string; text: string; type: string }[] = [];
+    categoriesWithQuestions.forEach(cat => {
+      cat.questions.forEach(q => {
+        allQuestions.push({
+          id: q.id,
+          category: cat.title,
+          text: q.text,
+          type: q.type
+        });
+      });
+    });
+
+    // Build headers: Email, Name, Dates, Status, then all questions
+    const headers = [
+      "Email",
+      "Nombre",
+      "Fecha Creación",
+      "Fecha Completado",
+      "Estado",
+      ...allQuestions.map(q => `[${q.category}] ${q.text}`)
+    ];
+
+    // Build rows: one per survey
+    const rows = filteredSurveys.map(survey => {
+      const row = [
+        survey.email,
+        survey.name,
+        new Date(survey.created_at).toLocaleDateString("es-MX"),
+        survey.completed_at ? new Date(survey.completed_at).toLocaleDateString("es-MX") : "N/A",
+        survey.completed_at ? "Completada" : "Incompleta"
+      ];
+
+      // Add answer for each question
+      allQuestions.forEach(question => {
+        const response = survey.survey_responses.find(r => r.question_id === question.id);
+        if (response) {
+          if (response.is_not_my_role) {
+            row.push("No es mi rol");
+          } else {
+            row.push(response.answer_value || "");
+          }
+        } else {
+          row.push("");
+        }
+      });
+
+      return row;
+    });
+
+    // Escape CSV values (handle commas and quotes)
+    const escapeCsv = (value: string) => {
+      if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+        return `"${value.replace(/"/g, '""')}"`;
+      }
+      return value;
+    };
 
     const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.join(","))
+      headers.map(escapeCsv).join(","),
+      ...rows.map(row => row.map(cell => escapeCsv(String(cell))).join(","))
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\ufeff" + csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `encuestas_${new Date().toISOString().split("T")[0]}.csv`;
+    link.download = `encuestas_detalladas_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
   };
 
@@ -1019,6 +1068,111 @@ export default function AdminPage() {
                     </CardContent>
                   </Card>
                 ))}
+
+                {/* Detailed Question Statistics */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <PieChart className="w-5 h-5" />
+                      Distribución de Respuestas por Pregunta
+                    </CardTitle>
+                    <CardDescription>
+                      Análisis detallado de cada pregunta de opción múltiple
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-8">
+                      {categoriesWithQuestions.map((category, catIndex) => {
+                        const categoryResponses = surveys
+                          .filter(s => s.completed_at)
+                          .flatMap(s => s.survey_responses)
+                          .filter(r => category.questions.some(q => q.id === r.question_id));
+
+                        return (
+                          <div key={category.id} className="space-y-4">
+                            <div className="flex items-center gap-3 pb-2 border-b border-border">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center font-bold text-primary text-sm">
+                                {catIndex + 1}
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-foreground">{category.title}</h3>
+                                <p className="text-xs text-muted-foreground">{category.description}</p>
+                              </div>
+                            </div>
+
+                            {category.questions.filter(q => q.type === "likert").map((question, qIndex) => {
+                              const questionResponses = categoryResponses.filter(r => r.question_id === question.id && !r.is_not_my_role && r.answer_value);
+                              const totalForQuestion = questionResponses.length;
+                              
+                              // Parse options
+                              let options: string[] = [];
+                              try {
+                                options = question.options ? 
+                                  (typeof question.options === "string" ? JSON.parse(question.options) : question.options) 
+                                  : [];
+                              } catch (e) {
+                                options = [];
+                              }
+
+                              // Count responses per option
+                              const optionCounts: Record<string, number> = {};
+                              options.forEach(opt => optionCounts[opt] = 0);
+                              questionResponses.forEach(r => {
+                                if (r.answer_value && optionCounts.hasOwnProperty(r.answer_value)) {
+                                  optionCounts[r.answer_value]++;
+                                }
+                              });
+
+                              const maxCount = Math.max(...Object.values(optionCounts), 1);
+
+                              return (
+                                <div key={question.id} className="bg-muted/30 rounded-lg p-4 space-y-3">
+                                  <div>
+                                    <p className="text-sm font-medium text-foreground mb-1">
+                                      {qIndex + 1}. {question.text}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {totalForQuestion} respuesta{totalForQuestion !== 1 ? "s" : ""}
+                                    </p>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    {options.map((option, optIndex) => {
+                                      const count = optionCounts[option] || 0;
+                                      const percentage = totalForQuestion > 0 ? Math.round((count / totalForQuestion) * 100) : 0;
+                                      const barWidth = totalForQuestion > 0 ? Math.max(5, (count / maxCount) * 100) : 0;
+
+                                      return (
+                                        <div key={optIndex} className="space-y-1">
+                                          <div className="flex justify-between items-center text-xs">
+                                            <span className="font-medium text-foreground">{option}</span>
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-muted-foreground">{count} respuestas</span>
+                                              <span className="font-bold text-primary min-w-[3rem] text-right">{percentage}%</span>
+                                            </div>
+                                          </div>
+                                          <div className="w-full bg-background rounded-full h-2 overflow-hidden border border-border/50">
+                                            <div 
+                                              className="h-full rounded-full transition-all duration-500"
+                                              style={{ 
+                                                width: `${barWidth}%`,
+                                                backgroundColor: `hsl(${220 + optIndex * 25}, 70%, ${50 + (optIndex % 3) * 10}%)`
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </TabsContent>
 

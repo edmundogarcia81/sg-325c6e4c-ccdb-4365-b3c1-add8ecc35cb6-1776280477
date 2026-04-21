@@ -117,6 +117,8 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
     if (!surveyId) throw new Error("No survey ID");
 
     try {
+      console.log("💾 Auto-saving response:", { questionId, answerValue, isNotMyRole });
+      
       const response = await surveyService.saveResponse({
         surveyId,
         questionId,
@@ -128,8 +130,10 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
         ...prev,
         [questionId]: response,
       }));
+      
+      console.log("✅ Response auto-saved successfully");
     } catch (error) {
-      console.error("Error saving response:", error);
+      console.error("❌ Error auto-saving response:", error);
       throw error;
     }
   };
