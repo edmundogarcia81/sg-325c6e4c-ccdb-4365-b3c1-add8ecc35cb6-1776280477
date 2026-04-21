@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -8,7 +8,6 @@ import type { Tables } from "@/integrations/supabase/types";
 import { AutoSaveIndicator } from "./AutoSaveIndicator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 
 type SurveyResponse = Tables<"survey_responses">;
 
@@ -23,6 +22,14 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
   const [selectedValue, setSelectedValue] = useState<string | null>(response?.answer_value || null);
   const [openResponse, setOpenResponse] = useState(response?.answer_value || "");
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+
+  useEffect(() => {
+    if (response) {
+      setIsNotMyRole(response.is_not_my_role);
+      setSelectedValue(response.answer_value);
+      setOpenResponse(response.answer_value || "");
+    }
+  }, [response]);
 
   const handleSave = async (value: string | null, notMyRole: boolean) => {
     setSaveStatus("saving");
@@ -56,43 +63,42 @@ export function QuestionCard({ question, response, onResponseChange }: QuestionC
   };
 
   const handleOpenResponseBlur = async () => {
-    if (openResponse.trim()) {
+    if (openResponse.trim() !== response?.answer_value) {
       setIsNotMyRole(false);
       await handleSave(openResponse.trim(), false);
     }
   };
 
-  // Parse options from JSONB string
-  const options = question.options ? 
-    (typeof question.options === "string" ? JSON.parse(question.options) : question.options) 
-    : [];
+  let options: string[] = [];
+  try {
+    if (question.options) {
+      options = typeof question.options === "string" 
+        ? JSON.parse(question.options) 
+        : (Array.isArray(question.options) ? question.options.map(String) : []);
+    }
+  } catch (e) {
+    options = [];
+  }
 
   return (
     <Card className="border-2 hover:border-primary/20 transition-colors">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-start gap-2">
-              <Badge variant="outline" className="mt-0.5 shrink-0">
-                {questionNumber}
-              </Badge>
-              <CardTitle className="text-base leading-relaxed">
-                {question.text}
-              </CardTitle>
-            </div>
-          </div>
+          <CardTitle className="text-base leading-relaxed flex-1">
+            {question.text}
+          </CardTitle>
           <AutoSaveIndicator status={saveStatus} />
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {question.type === "choice" && question.options && (
+        {question.type !== "open" && options.length > 0 && (
           <RadioGroup
             value={selectedValue || ""}
             onValueChange={handleChoiceChange}
             disabled={isNotMyRole}
             className="space-y-3"
           >
-            {question.options.map((option, index) => (
+            {options.map((option, index) => (
               <div key={index} className="flex items-center space-x-2">
                 <RadioGroupItem value={option} id={`${question.id}-${index}`} />
                 <Label
