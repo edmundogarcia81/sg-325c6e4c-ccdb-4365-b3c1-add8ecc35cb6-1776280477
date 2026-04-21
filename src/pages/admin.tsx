@@ -1,6 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Image from "next/image";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { 
   Lock, 
   LogOut, 
@@ -466,6 +468,46 @@ export default function AdminPage() {
     link.href = URL.createObjectURL(blob);
     link.download = `encuestas_detalladas_${new Date().toISOString().split("T")[0]}.csv`;
     link.click();
+  };
+
+  const exportToPDF = async () => {
+    const element = document.getElementById("stats-content");
+    if (!element) return;
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff"
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth - 20;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      let heightLeft = imgHeight;
+      let position = 10;
+
+      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`estadisticas_encuesta_${new Date().toISOString().split("T")[0]}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error al generar el PDF. Intenta de nuevo.");
+    }
   };
 
   if (!isAuthenticated) {
@@ -1002,72 +1044,81 @@ export default function AdminPage() {
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-6">
-                {categoryStats.map((stat, index) => (
-                  <Card key={stat.id} className="overflow-hidden border-2 hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
-                    <CardHeader className="bg-muted/30 pb-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-bold text-primary border border-border">
-                          {index + 1}
-                        </div>
-                        <div>
-                          <CardTitle className="text-lg">{stat.title}</CardTitle>
-                          <CardDescription className="line-clamp-1">{stat.description}</CardDescription>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-5">
-                      <div className="grid grid-cols-2 gap-4 mb-6">
-                        <div className="bg-background rounded-lg p-3 border border-border">
-                          <p className="text-xs text-muted-foreground font-medium mb-1">Total Respuestas</p>
-                          <p className="text-2xl font-bold">{stat.validResponses}</p>
-                        </div>
-                        <div className="bg-background rounded-lg p-3 border border-border">
-                          <p className="text-xs text-muted-foreground font-medium mb-1">Tasa de Completitud</p>
-                          <p className="text-2xl font-bold text-primary">{stat.completionRate}%</p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <div className="flex justify-between text-sm mb-1.5">
-                            <span className="font-medium text-foreground">Respuestas Válidas</span>
-                            <span className="font-bold">{stat.validResponses}</span>
+              <div className="flex justify-end mb-4">
+                <Button onClick={exportToPDF} className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Descargar PDF
+                </Button>
+              </div>
+
+              <div id="stats-content" className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-6">
+                  {categoryStats.map((stat, index) => (
+                    <Card key={stat.id} className="overflow-hidden border-2 hover:border-primary/20 transition-all shadow-sm hover:shadow-md">
+                      <CardHeader className="bg-muted/30 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center font-bold text-primary border border-border">
+                            {index + 1}
                           </div>
-                          <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
-                            <div 
-                              className="bg-primary h-full rounded-full" 
-                              style={{ width: `${stat.totalResponses ? (stat.validResponses / stat.totalResponses) * 100 : 0}%` }}
-                            />
+                          <div>
+                            <CardTitle className="text-lg">{stat.title}</CardTitle>
+                            <CardDescription className="line-clamp-1">{stat.description}</CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-5">
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                          <div className="bg-background rounded-lg p-3 border border-border">
+                            <p className="text-xs text-muted-foreground font-medium mb-1">Total Respuestas</p>
+                            <p className="text-2xl font-bold">{stat.validResponses}</p>
+                          </div>
+                          <div className="bg-background rounded-lg p-3 border border-border">
+                            <p className="text-xs text-muted-foreground font-medium mb-1">Tasa de Completitud</p>
+                            <p className="text-2xl font-bold text-primary">{stat.completionRate}%</p>
                           </div>
                         </div>
                         
-                        <div>
-                          <div className="flex justify-between text-sm mb-1.5">
-                            <span className="text-muted-foreground">"No es mi rol"</span>
-                            <span className="font-medium text-muted-foreground">{stat.notMyRoleResponses}</span>
+                        <div className="space-y-3">
+                          <div>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="font-medium text-foreground">Respuestas Válidas</span>
+                              <span className="font-bold">{stat.validResponses}</span>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+                              <div 
+                                className="bg-primary h-full rounded-full" 
+                                style={{ width: `${stat.totalResponses ? (stat.validResponses / stat.totalResponses) * 100 : 0}%` }}
+                              />
+                            </div>
                           </div>
-                          <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
-                            <div 
-                              className="bg-muted-foreground/40 h-full rounded-full" 
-                              style={{ width: `${stat.totalResponses ? (stat.notMyRoleResponses / stat.totalResponses) * 100 : 0}%` }}
-                            />
+                          
+                          <div>
+                            <div className="flex justify-between text-sm mb-1.5">
+                              <span className="text-muted-foreground">"No es mi rol"</span>
+                              <span className="font-medium text-muted-foreground">{stat.notMyRoleResponses}</span>
+                            </div>
+                            <div className="w-full bg-secondary rounded-full h-1.5 overflow-hidden">
+                              <div 
+                                className="bg-muted-foreground/40 h-full rounded-full" 
+                                style={{ width: `${stat.totalResponses ? (stat.notMyRoleResponses / stat.totalResponses) * 100 : 0}%` }}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="mt-6 pt-5 border-t border-border">
-                        <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          Respuesta Más Común
-                        </p>
-                        <p className="text-sm font-medium bg-primary/5 text-primary-foreground text-primary p-3 rounded-lg border border-primary/10">
-                          "{stat.mostCommonAnswer}"
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <div className="mt-6 pt-5 border-t border-border">
+                          <p className="text-xs text-muted-foreground font-medium mb-2 flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Respuesta Más Común
+                          </p>
+                          <p className="text-sm font-medium bg-primary/5 text-primary-foreground text-primary p-3 rounded-lg border border-primary/10">
+                            "{stat.mostCommonAnswer}"
+                          </p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
                 {/* Detailed Question Statistics */}
                 <Card>
